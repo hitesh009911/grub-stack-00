@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, ChefHat, Shield, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { Link, useNavigate } from 'react-router-dom';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface LoginPageProps {
   onToggleMode: () => void;
@@ -16,8 +18,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggleMode, onLoginSuccess }) =
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
   const { login, isLoading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,30 +36,93 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggleMode, onLoginSuccess }) =
     }
 
     try {
-      await login(email, password);
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in."
-      });
-      onLoginSuccess();
-    } catch (error) {
+      if (isAdminLogin) {
+        // Handle admin login - try real API first, fallback to hardcoded
+        try {
+          const response = await fetch('/admin/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (response.ok) {
+            const adminData = await response.json();
+            
+            const adminSession = {
+              id: adminData.id,
+              email: adminData.email,
+              name: adminData.fullName,
+              role: 'admin',
+              permissions: adminData.permissions || []
+            };
+            
+            localStorage.setItem('grub-stack-admin', JSON.stringify(adminSession));
+            
+            toast({
+              title: "Admin login successful!",
+              description: "Welcome to the admin dashboard"
+            });
+            
+            navigate('/admin/dashboard');
+            return;
+          } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Invalid admin credentials');
+          }
+        } catch (apiError) {
+          // Fallback to hardcoded authentication
+          console.log('API authentication failed, using fallback:', apiError);
+          
+          if (email === 'admin@grubstack.com' && password === 'admin123') {
+            const adminSession = {
+              id: '1',
+              email: 'admin@grubstack.com',
+              name: 'System Administrator',
+              role: 'admin',
+              permissions: ['MANAGE_RESTAURANTS', 'MANAGE_ADMINS', 'MANAGE_USERS', 'VIEW_ANALYTICS', 'MANAGE_ORDERS']
+            };
+            
+            localStorage.setItem('grub-stack-admin', JSON.stringify(adminSession));
+            
+            toast({
+              title: "Admin login successful!",
+              description: "Welcome to the admin dashboard"
+            });
+            
+            navigate('/admin/dashboard');
+            return;
+          } else {
+            throw new Error('Invalid admin credentials');
+          }
+        }
+      } else {
+        // Handle regular user login
+        await login(email, password);
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully logged in."
+        });
+        onLoginSuccess();
+      }
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: "Please check your credentials and try again."
+        description: error.message || "Please check your credentials and try again."
       });
     }
   };
 
-  const demoUsers = [
-    { email: 'customer@demo.com', role: 'Customer' },
-    { email: 'restaurant@demo.com', role: 'Restaurant Owner' },
-    { email: 'delivery@demo.com', role: 'Delivery Agent' },
-    { email: 'admin@demo.com', role: 'Admin' },
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center p-4">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -73,8 +140,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggleMode, onLoginSuccess }) =
               <span className="text-2xl font-bold text-white">🍽️</span>
             </motion.div>
             <div>
-              <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-              <CardDescription>Sign in to continue ordering delicious food</CardDescription>
+              <CardTitle className="text-2xl font-bold text-foreground">Welcome Back</CardTitle>
+              <CardDescription className="text-muted-foreground">Sign in to continue ordering delicious food</CardDescription>
             </div>
           </CardHeader>
           
@@ -114,7 +181,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggleMode, onLoginSuccess }) =
                   </Button>
                 </div>
               </div>
-              
+
               <Button
                 type="submit"
                 className="w-full bg-gradient-primary hover:shadow-primary transition-all duration-300"
@@ -128,32 +195,63 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggleMode, onLoginSuccess }) =
                   />
                 ) : (
                   <>
-                    Sign In
+                    {isAdminLogin ? 'Sign In as Admin' : 'Sign In'}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
               </Button>
             </form>
+
+            {/* Admin Login Toggle */}
+            <div className="flex items-center space-x-2">
+              <Button
+                type="button"
+                variant={isAdminLogin ? "default" : "outline"}
+                size="sm"
+                onClick={() => setIsAdminLogin(!isAdminLogin)}
+                className="flex-1"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                {isAdminLogin ? 'Admin Mode' : 'Admin Login'}
+              </Button>
+            </div>
+
+            {/* Admin Demo Credentials */}
+            {isAdminLogin && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Admin Demo Credentials:</h4>
+                <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                  <p><strong>Email:</strong> admin@grubstack.com</p>
+                  <p><strong>Password:</strong> admin123</p>
+                </div>
+              </div>
+            )}
             
             <div className="space-y-3">
-              <div className="text-center text-sm text-muted-foreground">
-                Demo Accounts (password: demo123)
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  asChild
+                >
+                  <Link to="/restaurant/login">
+                    <ChefHat className="mr-2 h-4 w-4" />
+                    Restaurant Login
+                  </Link>
+                </Button>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {demoUsers.map((user) => (
-                  <Button
-                    key={user.email}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setEmail(user.email);
-                      setPassword('demo123');
-                    }}
-                    className="text-xs"
-                  >
-                    {user.role}
-                  </Button>
-                ))}
+              
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  asChild
+                >
+                  <Link to="/delivery/login">
+                    <Truck className="mr-2 h-4 w-4" />
+                    Delivery Agent Login
+                  </Link>
+                </Button>
               </div>
             </div>
             

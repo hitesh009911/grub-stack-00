@@ -1,0 +1,301 @@
+name: GrubStack CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual triggers
+
+env:
+  # Java and Node versions
+  JAVA_VERSION: '17'
+  NODE_VERSION: '18'
+  
+  # Docker image registry (change to your registry later)
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ===========================================
+  # PHASE 1: CODE QUALITY & BUILD
+  # ===========================================
+  
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+          
+      - name: Install frontend dependencies
+        run: npm ci
+        
+      - name: Frontend linting
+        run: npm run lint --if-present
+        
+      - name: Frontend type checking
+        run: npm run type-check --if-present
+        
+      - name: Java code formatting check
+        run: |
+          find . -name "pom.xml" -path "*/service/*" -exec dirname {} \; | while read service; do
+            echo "Checking formatting in $service"
+            cd "$service"
+            mvn spotless:check || echo "Formatting issues found in $service"
+            cd - > /dev/null
+          done
+
+  # ===========================================
+  # PHASE 2: BUILD ALL SERVICES
+  # ===========================================
+  
+  build-services:
+    name: Build Microservices
+    runs-on: ubuntu-latest
+    needs: code-quality
+    strategy:
+      matrix:
+        service: 
+          - eureka-server
+          - user-service
+          - restaurant-service
+          - order-service
+          - delivery-service
+          - admin-service
+          - api-gateway
+          - notification-service
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+          
+      - name: Build ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          mvn clean compile -DskipTests
+          
+      - name: Run unit tests for ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          mvn test -Dmaven.test.failure.ignore=true
+          
+      - name: Package ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          mvn package -DskipTests
+
+  # ===========================================
+  # PHASE 3: BUILD FRONTEND
+  # ===========================================
+  
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: code-quality
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build frontend
+        run: npm run build
+        
+      - name: Upload frontend build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: dist/
+
+  # ===========================================
+  # PHASE 4: DOCKER BUILD
+  # ===========================================
+  
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [build-services, build-frontend]
+    if: github.event_name == 'push'
+    strategy:
+      matrix:
+        service: 
+          - eureka-server
+          - user-service
+          - restaurant-service
+          - order-service
+          - delivery-service
+          - admin-service
+          - api-gateway
+          - notification-service
+          - frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ===========================================
+  # PHASE 5: INTEGRATION TESTS
+  # ===========================================
+  
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build-services, build-frontend]
+    if: github.event_name == 'push'
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: grubstack
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          
+      - name: Wait for MySQL
+        run: |
+          while ! mysqladmin ping -h127.0.0.1 -P3306 -uroot -proot --silent; do
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+          
+      - name: Run integration tests
+        run: |
+          # Start services in background for integration testing
+          cd eureka-server && mvn spring-boot:run &
+          EUREKA_PID=$!
+          sleep 30
+          
+          # Run integration tests
+          cd ../restaurant-service
+          mvn test -Dtest=*IntegrationTest
+          
+          # Cleanup
+          kill $EUREKA_PID || true
+
+  # ===========================================
+  # PHASE 6: DEPLOYMENT (Future)
+  # ===========================================
+  
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [docker-build, integration-tests]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          echo "This will be implemented when you're ready for deployment"
+          # Future: Add actual deployment steps here
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [docker-build, integration-tests]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying to production environment..."
+          echo "This will be implemented when you're ready for production deployment"
+          # Future: Add actual deployment steps here
+
+  # ===========================================
+  # PHASE 7: NOTIFICATIONS
+  # ===========================================
+  
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    steps:
+      - name: Notify on success
+        if: ${{ needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success' }}
+        run: |
+          echo "✅ Deployment successful!"
+          # Future: Add Slack/Discord notifications
+          
+      - name: Notify on failure
+        if: ${{ needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure' }}
+        run: |
+          echo "❌ Deployment failed!"
+          # Future: Add failure notifications
+

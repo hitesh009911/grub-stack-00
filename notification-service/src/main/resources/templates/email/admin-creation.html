@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Account Created - GrubStack</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .admin-details {
+            background-color: #fdf2f2;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #e74c3c;
+        }
+        .detail-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .detail-label {
+            font-weight: bold;
+            width: 120px;
+            color: #2c3e50;
+        }
+        .detail-value {
+            color: #34495e;
+        }
+        .credentials {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border: 1px solid #ffeaa7;
+        }
+        .credential-item {
+            margin-bottom: 8px;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #e74c3c;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .features {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .feature-item {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+        .feature-item::before {
+            content: "🔧";
+            position: absolute;
+            left: 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">👑 GrubStack Admin</div>
+            <div class="subtitle">Your admin account has been created</div>
+        </div>
+        
+        <div class="content">
+            <h2>Welcome to GrubStack Admin Panel!</h2>
+            <p>Dear <strong th:text="${adminName}">Admin Name</strong>,</p>
+            
+            <p>Your admin account has been successfully created. You now have access to the GrubStack admin panel with <strong th:text="${role}">ADMIN</strong> privileges.</p>
+            
+            <div class="admin-details">
+                <h3>Account Details</h3>
+                <div class="detail-row">
+                    <div class="detail-label">Name:</div>
+                    <div class="detail-value" th:text="${adminName}">Admin Name</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Email:</div>
+                    <div class="detail-value" th:text="${adminEmail}">admin@example.com</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Role:</div>
+                    <div class="detail-value" th:text="${role}">ADMIN</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Created:</div>
+                    <div class="detail-value" th:text="${creationDate}">2025-01-01</div>
+                </div>
+            </div>
+            
+            <div class="credentials">
+                <h3>🔐 Login Credentials</h3>
+                <div class="credential-item"><strong>Email:</strong> <span th:text="${adminEmail}">admin@example.com</span></div>
+                <div class="credential-item"><strong>Password:</strong> <span th:text="${password}">your_password</span></div>
+            </div>
+            
+            <div class="warning">
+                <strong>⚠️ Important:</strong> Please change your password after your first login for security purposes.
+            </div>
+            
+            <div class="features">
+                <h3>Admin Panel Features:</h3>
+                <div class="feature-item">Manage restaurant registrations and approvals</div>
+                <div class="feature-item">Create and manage admin users</div>
+                <div class="feature-item">Create and manage delivery agents</div>
+                <div class="feature-item">Monitor system performance and analytics</div>
+                <div class="feature-item">Handle customer support requests</div>
+                <div class="feature-item">Manage system configurations</div>
+            </div>
+            
+            <p><strong>Ready to get started?</strong></p>
+            <p>You can now access the admin panel using the credentials provided above.</p>
+            
+            <div style="text-align: center;">
+                <a href="http://localhost:5173/admin/login" class="cta-button">Access Admin Panel</a>
+            </div>
+            
+            <p>If you have any questions or need assistance, please contact the system administrator.</p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 GrubStack. All rights reserved.</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

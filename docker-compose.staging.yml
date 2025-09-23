@@ -1,0 +1,88 @@
+version: '3.8'
+
+# Staging environment configuration
+# This extends the base docker-compose.yml with staging-specific settings
+
+services:
+  mysql:
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-staging_root}
+      MYSQL_DATABASE: grubstack_staging
+      MYSQL_USER: grubstack
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-staging_password}
+    volumes:
+      - mysql_staging_data:/var/lib/mysql
+
+  eureka-server:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - EUREKA_SERVER_HOSTNAME=eureka-server
+    restart: unless-stopped
+
+  user-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_staging
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD:-staging_password}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    restart: unless-stopped
+
+  restaurant-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_staging
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD:-staging_password}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    restart: unless-stopped
+
+  order-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_staging
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD:-staging_password}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    restart: unless-stopped
+
+  delivery-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_staging
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD:-staging_password}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    restart: unless-stopped
+
+  admin-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_staging
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD:-staging_password}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    restart: unless-stopped
+
+  notification-service:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_staging
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD:-staging_password}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    restart: unless-stopped
+
+  api-gateway:
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    restart: unless-stopped
+
+  frontend:
+    restart: unless-stopped
+
+volumes:
+  mysql_staging_data:
+    driver: local
+

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${subject}">Delivery Agent Assigned</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #4caf50, #8bc34a);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 30px;
+        }
+        .agent-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+        .agent-info h3 {
+            color: #4caf50;
+            margin-top: 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #666;
+        }
+        .info-value {
+            color: #333;
+        }
+        .status-badge {
+            display: inline-block;
+            background-color: #4caf50;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .message {
+            background-color: #e8f5e8;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #4caf50;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .agent-avatar {
+            width: 60px;
+            height: 60px;
+            background-color: #4caf50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 auto 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚚 GrubStack</h1>
+            <p>Your delivery agent is on the way!</p>
+        </div>
+        
+        <div class="content">
+            <h2 th:text="${subject}">Delivery Agent Assigned</h2>
+            
+            <div class="agent-info">
+                <div class="agent-avatar" th:text="${agentName != null ? agentName.substring(0, 1).toUpperCase() : 'A'}">A</div>
+                <h3>Meet Your Delivery Agent</h3>
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value" th:text="${agentName}">John Doe</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phone:</span>
+                    <span class="info-value" th:text="${agentPhone}">+1 (555) 123-4567</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Order ID:</span>
+                    <span class="info-value" th:text="'#' + ${orderId}">#12345</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Estimated Delivery:</span>
+                    <span class="info-value" th:text="${estimatedTime} + ' minutes'">25 minutes</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        <span class="status-badge">Assigned</span>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="message">
+                <p th:text="${message}">Your delivery agent has been assigned and will pick up your order soon. You can contact them directly if needed!</p>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="#" class="cta-button">Track Your Order</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Your order is in good hands! 🚀</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>&copy; 2025 GrubStack. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

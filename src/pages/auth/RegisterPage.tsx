@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface RegisterPageProps {
   onToggleMode: () => void;
@@ -69,12 +70,29 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
         title: "Account created!",
         description: "Welcome to GrubStack!"
       });
+      
+      // If delivery agent, redirect to delivery dashboard
+      if (formData.role === 'delivery') {
+        // Store delivery agent data for the delivery dashboard
+        const agentData = {
+          id: Date.now(), // Temporary ID until we get real ID from backend
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          role: 'delivery',
+          status: 'AVAILABLE'
+        };
+        localStorage.setItem('deliveryAgent', JSON.stringify(agentData));
+        window.location.href = '/delivery/dashboard';
+        return;
+      }
+      
       onRegisterSuccess();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Registration failed",
-        description: "Please try again with different details."
+        description: error.message || "Please try again with different details."
       });
     }
   };
@@ -85,6 +103,11 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center p-4">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -102,8 +125,8 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
               <span className="text-2xl font-bold text-white">🍽️</span>
             </motion.div>
             <div>
-              <CardTitle className="text-2xl font-bold">Join GrubStack</CardTitle>
-              <CardDescription>Create your account and start ordering</CardDescription>
+              <CardTitle className="text-2xl font-bold text-foreground">Join GrubStack</CardTitle>
+              <CardDescription className="text-muted-foreground">Create your account and start ordering</CardDescription>
             </div>
           </CardHeader>
           

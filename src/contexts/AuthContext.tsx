@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { api, userApi } from '@/lib/api';
 
 interface User {
   id: string;
@@ -50,20 +51,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Mock API call - replace with actual API integration
-      const mockUser: User = {
-        id: '1',
-        email,
-        name: email.split('@')[0],
-        role: email.includes('restaurant') ? 'restaurant' : 
-              email.includes('delivery') ? 'delivery' :
-              email.includes('admin') ? 'admin' : 'customer',
+      const { data } = await userApi.post('/auth/login', { email, password });
+      const roles: string[] = Array.isArray(data.roles) ? data.roles : [];
+      const primaryRole = (roles[0] || 'CUSTOMER').toLowerCase();
+      const mappedRole: User['role'] =
+        primaryRole.includes('owner') ? 'restaurant' :
+        primaryRole.includes('delivery') ? 'delivery' :
+        primaryRole.includes('admin') ? 'admin' : 'customer';
+
+      const loggedIn: User = {
+        id: String(data.id ?? ''),
+        email: data.email,
+        name: data.fullName ?? data.email?.split('@')[0] ?? '',
+        role: mappedRole,
       };
-      
-      setUser(mockUser);
-      localStorage.setItem('grub-stack-user', JSON.stringify(mockUser));
-    } catch (error) {
-      throw new Error('Login failed');
+
+      setUser(loggedIn);
+      localStorage.setItem('grub-stack-user', JSON.stringify(loggedIn));
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new Error('Invalid email or password');
+      } else if (error.response?.status === 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else {
+        throw new Error('Login failed. Please check your connection.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -72,16 +86,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (userData: RegisterData) => {
     setIsLoading(true);
     try {
-      // Mock API call - replace with actual API integration
+      const backendRole =
+        userData.role === 'restaurant' ? 'OWNER' :
+        userData.role === 'delivery' ? 'DELIVERY' : 'CUSTOMER';
+      const { data } = await userApi.post('/auth/register', {
+        email: userData.email,
+        password: userData.password,
+        fullName: userData.name,
+        roles: [backendRole],
+      });
+
+      const roles: string[] = Array.isArray(data.roles) ? data.roles : [];
+      const primaryRole = (roles[0] || 'CUSTOMER').toLowerCase();
+      const mappedRole: User['role'] =
+        primaryRole.includes('owner') ? 'restaurant' :
+        primaryRole.includes('delivery') ? 'delivery' :
+        primaryRole.includes('admin') ? 'admin' : 'customer';
+
       const newUser: User = {
-        id: Date.now().toString(),
-        ...userData,
+        id: String(data.id ?? ''),
+        email: data.email,
+        name: data.fullName ?? userData.name,
+        role: mappedRole,
+        phone: userData.phone,
       };
-      
+
       setUser(newUser);
       localStorage.setItem('grub-stack-user', JSON.stringify(newUser));
-    } catch (error) {
-      throw new Error('Registration failed');
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        throw new Error('Email already exists. Please use a different email.');
+      } else if (error.response?.status === 400) {
+        throw new Error('Invalid registration data. Please check your inputs.');
+      } else if (error.response?.status === 500) {
+        throw new Error('Server error. Please try again later.');
+      } else if (error.response?.data?.error) {
+        throw new Error(error.response.data.error);
+      } else {
+        throw new Error('Registration failed. Please check your connection.');
+      }
     } finally {
       setIsLoading(false);
     }

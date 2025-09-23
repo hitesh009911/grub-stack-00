@@ -1,73 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search, Filter, Star, Clock, Truck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { api } from '@/lib/api';
 import italianImg from '@/assets/restaurant-italian.jpg';
 import sushiImg from '@/assets/restaurant-sushi.jpg';
 import indianImg from '@/assets/restaurant-indian.jpg';
 import burgerImg from '@/assets/restaurant-burger.jpg';
 
 interface Restaurant {
-  id: string;
+  id: number;
   name: string;
+  description: string;
+  cuisine: string;
+  address: string;
+  createdAt: string;
   image: string;
   rating: number;
   deliveryTime: string;
   deliveryFee: number;
-  cuisine: string[];
   promoted?: boolean;
   discount?: string;
 }
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data - replace with API calls
-  const restaurants: Restaurant[] = [
-    {
-      id: '1',
-      name: 'Bella Italia',
-      image: italianImg,
-      rating: 4.8,
-      deliveryTime: '25-35 min',
-      deliveryFee: 2.50,
-      cuisine: ['Italian', 'Pizza', 'Pasta'],
-      promoted: true,
-      discount: '20% OFF'
-    },
-    {
-      id: '2',
-      name: 'Spice Garden',
-      image: indianImg,
-      rating: 4.6,
-      deliveryTime: '30-40 min',
-      deliveryFee: 1.99,
-      cuisine: ['Indian', 'Curry', 'Vegetarian']
-    },
-    {
-      id: '3',
-      name: 'Burger House',
-      image: burgerImg,
-      rating: 4.5,
-      deliveryTime: '20-30 min',
-      deliveryFee: 3.00,
-      cuisine: ['American', 'Burgers', 'Fast Food'],
-      discount: '15% OFF'
-    },
-    {
-      id: '4',
-      name: 'Sushi Zen',
-      image: sushiImg,
-      rating: 4.9,
-      deliveryTime: '35-45 min',
-      deliveryFee: 4.50,
-      cuisine: ['Japanese', 'Sushi', 'Fresh'],
-      promoted: true
-    }
-  ];
+  // Fetch restaurants from API
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        setLoading(true);
+        const { data } = await api.get('/restaurants');
+        
+        // Transform backend data to frontend format
+        const transformedRestaurants = data.map((restaurant: any) => ({
+          ...restaurant,
+          image: getRestaurantImage(restaurant.cuisine),
+          rating: 4.5 + Math.random() * 0.5, // Mock rating
+          deliveryTime: `${20 + Math.floor(Math.random() * 20)}-${30 + Math.floor(Math.random() * 20)} min`,
+          deliveryFee: 1.99 + Math.random() * 3,
+          promoted: Math.random() > 0.7,
+          discount: Math.random() > 0.8 ? `${Math.floor(Math.random() * 20) + 10}% OFF` : undefined
+        }));
+        
+        setRestaurants(transformedRestaurants);
+      } catch (err) {
+        setError('Failed to load restaurants');
+        console.error('Error fetching restaurants:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRestaurants();
+  }, []);
+
+  // Helper function to get restaurant image based on cuisine
+  const getRestaurantImage = (cuisine: string | null) => {
+    if (!cuisine) return italianImg; // default if cuisine is null
+    const cuisineLower = cuisine.toLowerCase();
+    if (cuisineLower.includes('italian') || cuisineLower.includes('pizza')) return italianImg;
+    if (cuisineLower.includes('japanese') || cuisineLower.includes('sushi')) return sushiImg;
+    if (cuisineLower.includes('indian') || cuisineLower.includes('curry')) return indianImg;
+    if (cuisineLower.includes('american') || cuisineLower.includes('burger')) return burgerImg;
+    return italianImg; // default
+  };
 
   const categories = [
     { name: 'Pizza', icon: '🍕', color: 'bg-red-100 text-red-700' },
@@ -80,8 +86,30 @@ const HomePage: React.FC = () => {
 
   const filteredRestaurants = restaurants.filter(restaurant =>
     restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    restaurant.cuisine.some(cuisine => cuisine.toLowerCase().includes(searchQuery.toLowerCase()))
+    (restaurant.cuisine && restaurant.cuisine.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading restaurants...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-destructive mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20">
@@ -151,7 +179,10 @@ const HomePage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="cursor-pointer hover:shadow-lg transition-all duration-300">
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-all duration-300"
+                onClick={() => navigate(`/restaurant/${restaurant.id}`)}
+              >
                 <CardContent className="p-0">
                   <div className="relative">
                     <img
@@ -181,11 +212,9 @@ const HomePage: React.FC = () => {
                     </div>
                     
                     <div className="flex flex-wrap gap-1 mb-3">
-                      {restaurant.cuisine.map((cuisine) => (
-                        <Badge key={cuisine} variant="secondary" className="text-xs">
-                          {cuisine}
-                        </Badge>
-                      ))}
+                      <Badge variant="secondary" className="text-xs">
+                        {restaurant.cuisine || 'Restaurant'}
+                      </Badge>
                     </div>
                     
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -195,7 +224,7 @@ const HomePage: React.FC = () => {
                       </div>
                       <div className="flex items-center space-x-1">
                         <Truck className="h-4 w-4" />
-                        <span>${restaurant.deliveryFee.toFixed(2)} delivery</span>
+                        <span>₹{restaurant.deliveryFee.toFixed(2)} delivery</span>
                       </div>
                     </div>
                   </div>
@@ -203,6 +232,70 @@ const HomePage: React.FC = () => {
               </Card>
             </motion.div>
           ))}
+        </div>
+
+        {/* Delivery Agent Section */}
+        <div className="py-16 bg-gradient-to-r from-green-50 to-blue-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Join Our Delivery Team
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Become a delivery agent and start earning with GrubStack. 
+                Flexible hours, competitive pay, and be your own boss.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Card className="h-full">
+                  <CardContent className="p-8 text-center">
+                    <Truck className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-4">New to Delivery?</h3>
+                    <p className="text-gray-600 mb-6">
+                      Apply to become a delivery agent. We'll review your application 
+                      and get back to you within 2-3 business days.
+                    </p>
+                    <Button 
+                      onClick={() => navigate('/delivery/register')}
+                      className="w-full"
+                    >
+                      Apply Now
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Card className="h-full">
+                  <CardContent className="p-8 text-center">
+                    <Truck className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-4">Already an Agent?</h3>
+                    <p className="text-gray-600 mb-6">
+                      Sign in to your delivery dashboard to view assigned orders, 
+                      update delivery status, and manage your deliveries.
+                    </p>
+                    <Button 
+                      onClick={() => navigate('/delivery/login')}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Agent Login
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

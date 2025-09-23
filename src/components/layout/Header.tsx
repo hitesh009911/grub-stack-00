@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Bell, Menu, MapPin, LogOut, User } from 'lucide-react';
+import { Menu, MapPin, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -13,8 +13,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import NotificationDropdown from '@/components/NotificationDropdown';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   title: string;
@@ -35,6 +37,7 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
@@ -81,21 +84,14 @@ const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center space-x-2">
             {rightContent}
             
+            
             {/* Theme Toggle */}
             <ThemeToggle />
             
             {user && (
               <>
                 {/* Notifications */}
-                <Button variant="ghost" size="sm" className="relative p-2">
-                  <Bell className="h-5 w-5" />
-                  <Badge 
-                    variant="destructive" 
-                    className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-xs"
-                  >
-                    3
-                  </Badge>
-                </Button>
+                <NotificationDropdown />
 
                 {/* User Menu */}
                 <DropdownMenu>

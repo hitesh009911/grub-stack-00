@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -16,17 +17,17 @@ const App = () => (
     <ThemeProvider defaultTheme="system" storageKey="grub-stack-theme">
       <AuthProvider>
         <CartProvider>
-          <TooltipProvider>
+          <NotificationProvider>
+            <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <Routes>
-                <Route path="/" element={<Index />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
+                <Route path="*" element={<Index />} />
               </Routes>
             </BrowserRouter>
-          </TooltipProvider>
+            </TooltipProvider>
+          </NotificationProvider>
         </CartProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -1,0 +1,190 @@
+version: '3.8'
+
+# Production environment configuration
+# This extends the base docker-compose.yml with production-specific settings
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: grubstack_prod
+      MYSQL_USER: grubstack
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - grubstack-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  eureka-server:
+    image: ${REGISTRY:-ghcr.io}/grubstack/eureka-server:${TAG:-latest}
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - EUREKA_SERVER_HOSTNAME=eureka-server
+    networks:
+      - grubstack-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  user-service:
+    image: ${REGISTRY:-ghcr.io}/grubstack/user-service:${TAG:-latest}
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_prod
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    networks:
+      - grubstack-network
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  restaurant-service:
+    image: ${REGISTRY:-ghcr.io}/grubstack/restaurant-service:${TAG:-latest}
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_prod
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    networks:
+      - grubstack-network
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  order-service:
+    image: ${REGISTRY:-ghcr.io}/grubstack/order-service:${TAG:-latest}
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_prod
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    networks:
+      - grubstack-network
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  delivery-service:
+    image: ${REGISTRY:-ghcr.io}/grubstack/delivery-service:${TAG:-latest}
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_prod
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    networks:
+      - grubstack-network
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  admin-service:
+    image: ${REGISTRY:-ghcr.io}/grubstack/admin-service:${TAG:-latest}
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_prod
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    networks:
+      - grubstack-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  notification-service:
+    image: ${REGISTRY:-ghcr.io}/grubstack/notification-service:${TAG:-latest}
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/grubstack_prod
+      - SPRING_DATASOURCE_USERNAME=grubstack
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    networks:
+      - grubstack-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  api-gateway:
+    image: ${REGISTRY:-ghcr.io}/grubstack/api-gateway:${TAG:-latest}
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+    networks:
+      - grubstack-network
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  frontend:
+    image: ${REGISTRY:-ghcr.io}/grubstack/frontend:${TAG:-latest}
+    networks:
+      - grubstack-network
+    restart: always
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+volumes:
+  mysql_prod_data:
+    driver: local
+
+networks:
+  grubstack-network:
+    driver: bridge
+
