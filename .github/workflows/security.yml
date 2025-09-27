@@ -1,0 +1,116 @@
+name: Security Scanning
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # Run every Monday at 2 AM
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # ===========================================
+  # DEPENDENCY SCANNING
+  # ===========================================
+  
+  dependency-scan:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install frontend dependencies
+      run: npm ci
+      
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate
+      
+    - name: Run Maven dependency check
+      run: mvn org.owasp:dependency-check-maven:check
+      
+    - name: Upload dependency check results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: dependency-check-results
+        path: |
+          **/target/dependency-check-report.html
+          **/target/dependency-check-report.json
+
+  # ===========================================
+  # CONTAINER SECURITY
+  # ===========================================
+  
+  container-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Build Docker images
+      run: |
+        docker build -f docker/frontend/Dockerfile -t grubstack-frontend .
+        docker build -f docker/delivery-service/Dockerfile -t grubstack-delivery .
+        docker build -f docker/notification-service/Dockerfile -t grubstack-notification .
+        
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'grubstack-frontend'
+        format: 'sarif'
+        output: 'trivy-frontend.sarif'
+        
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-frontend.sarif'
+        
+    - name: Run Trivy on delivery service
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'grubstack-delivery'
+        format: 'sarif'
+        output: 'trivy-delivery.sarif'
+        
+    - name: Upload delivery scan results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-delivery.sarif'
+
+  # ===========================================
+  # SECRETS SCANNING
+  # ===========================================
+  
+  secrets-scan:
+    name: Secrets Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Run TruffleHog
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified

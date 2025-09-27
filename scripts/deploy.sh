@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # GrubStack Deployment Script
-# This script handles deployment of the GrubStack application
+# This script handles deployment to different environments
 
 set -e
 
@@ -12,107 +12,153 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuration
-ENVIRONMENT=${1:-development}
-REGISTRY=${2:-ghcr.io}
-IMAGE_TAG=${3:-latest}
+# Default values
+ENVIRONMENT="development"
+REGISTRY="ghcr.io"
+IMAGE_NAME="grub-stack-00"
+TAG="latest"
+NAMESPACE="grubstack"
 
-echo -e "${BLUE}🚀 Starting GrubStack deployment...${NC}"
-echo -e "${YELLOW}Environment: $ENVIRONMENT${NC}"
-echo -e "${YELLOW}Registry: $REGISTRY${NC}"
-echo -e "${YELLOW}Image Tag: $IMAGE_TAG${NC}"
-
-# Function to check if command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
+# Function to display usage
+usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -e, --environment ENV    Environment to deploy to (development|staging|production)"
+    echo "  -r, --registry REGISTRY  Docker registry URL (default: ghcr.io)"
+    echo "  -i, --image IMAGE        Image name (default: grub-stack-00)"
+    echo "  -t, --tag TAG            Image tag (default: latest)"
+    echo "  -n, --namespace NS       Kubernetes namespace (default: grubstack)"
+    echo "  -h, --help               Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0 --environment production --tag v1.0.0"
+    echo "  $0 --environment staging"
+    echo "  $0 --environment development --registry localhost:5000"
 }
 
-# Check prerequisites
-echo -e "${BLUE}📋 Checking prerequisites...${NC}"
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -e|--environment)
+            ENVIRONMENT="$2"
+            shift 2
+            ;;
+        -r|--registry)
+            REGISTRY="$2"
+            shift 2
+            ;;
+        -i|--image)
+            IMAGE_NAME="$2"
+            shift 2
+            ;;
+        -t|--tag)
+            TAG="$2"
+            shift 2
+            ;;
+        -n|--namespace)
+            NAMESPACE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option $1"
+            usage
+            exit 1
+            ;;
+    esac
+done
 
-if ! command_exists docker; then
-    echo -e "${RED}❌ Docker is not installed${NC}"
+# Validate environment
+case $ENVIRONMENT in
+    development|staging|production)
+        ;;
+    *)
+        echo -e "${RED}Error: Invalid environment '$ENVIRONMENT'. Must be one of: development, staging, production${NC}"
+        exit 1
+        ;;
+esac
+
+echo -e "${BLUE}🚀 Deploying GrubStack to $ENVIRONMENT environment${NC}"
+echo -e "${BLUE}Registry: $REGISTRY${NC}"
+echo -e "${BLUE}Image: $IMAGE_NAME:$TAG${NC}"
+echo -e "${BLUE}Namespace: $NAMESPACE${NC}"
+echo ""
+
+# Check prerequisites
+echo -e "${YELLOW}🔍 Checking prerequisites...${NC}"
+
+# Check if kubectl is installed
+if ! command -v kubectl &> /dev/null; then
+    echo -e "${RED}Error: kubectl is not installed${NC}"
     exit 1
 fi
 
-if ! command_exists docker-compose; then
-    echo -e "${RED}❌ Docker Compose is not installed${NC}"
+# Check if kubectl is configured
+if ! kubectl cluster-info &> /dev/null; then
+    echo -e "${RED}Error: kubectl is not configured or cluster is not accessible${NC}"
+    exit 1
+fi
+
+# Check if docker is installed
+if ! command -v docker &> /dev/null; then
+    echo -e "${RED}Error: docker is not installed${NC}"
     exit 1
 fi
 
 echo -e "${GREEN}✅ Prerequisites check passed${NC}"
 
-# Build images
-echo -e "${BLUE}🔨 Building Docker images...${NC}"
+# Create namespace if it doesn't exist
+echo -e "${YELLOW}📦 Creating namespace...${NC}"
+kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
 
-# Build all microservices
-services=("eureka-server" "user-service" "restaurant-service" "order-service" "delivery-service" "admin-service" "api-gateway" "notification-service" "frontend")
+# Apply configuration
+echo -e "${YELLOW}⚙️  Applying configuration...${NC}"
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secrets.yaml
 
-for service in "${services[@]}"; do
-    echo -e "${YELLOW}Building $service...${NC}"
-    docker build -f docker/$service/Dockerfile -t $REGISTRY/grubstack/$service:$IMAGE_TAG .
-done
+# Update image tag in deployment files
+echo -e "${YELLOW}🔄 Updating image tags...${NC}"
+sed -i.bak "s|image: .*|image: $REGISTRY/$IMAGE_NAME:$TAG|g" k8s/*.yaml
 
-echo -e "${GREEN}✅ All images built successfully${NC}"
+# Deploy services
+echo -e "${YELLOW}🚀 Deploying services...${NC}"
 
 # Deploy based on environment
 case $ENVIRONMENT in
-    "development")
-        echo -e "${BLUE}🏗️  Deploying to development environment...${NC}"
-        docker-compose -f docker-compose.yml up -d
+    development)
+        kubectl apply -f k8s/development/
         ;;
-    "staging")
-        echo -e "${BLUE}🏗️  Deploying to staging environment...${NC}"
-        docker-compose -f docker-compose.staging.yml up -d
+    staging)
+        kubectl apply -f k8s/staging/
         ;;
-    "production")
-        echo -e "${BLUE}🏗️  Deploying to production environment...${NC}"
-        docker-compose -f docker-compose.prod.yml up -d
-        ;;
-    *)
-        echo -e "${RED}❌ Unknown environment: $ENVIRONMENT${NC}"
-        echo -e "${YELLOW}Usage: $0 [development|staging|production] [registry] [tag]${NC}"
-        exit 1
+    production)
+        kubectl apply -f k8s/production/
         ;;
 esac
 
-# Wait for services to be healthy
-echo -e "${BLUE}⏳ Waiting for services to be healthy...${NC}"
-sleep 30
+# Wait for deployment to complete
+echo -e "${YELLOW}⏳ Waiting for deployment to complete...${NC}"
+kubectl rollout status deployment/grubstack-app -n $NAMESPACE --timeout=300s
 
-# Check service health
-echo -e "${BLUE}🏥 Checking service health...${NC}"
+# Check pod status
+echo -e "${YELLOW}🔍 Checking pod status...${NC}"
+kubectl get pods -n $NAMESPACE
 
-services_to_check=(
-    "eureka-server:8761"
-    "user-service:8082"
-    "restaurant-service:8083"
-    "order-service:8085"
-    "delivery-service:8084"
-    "admin-service:8087"
-    "api-gateway:8080"
-    "frontend:8081"
-)
+# Run health checks
+echo -e "${YELLOW}🏥 Running health checks...${NC}"
+./scripts/health-check.sh --namespace $NAMESPACE
 
-for service in "${services_to_check[@]}"; do
-    name=$(echo $service | cut -d: -f1)
-    port=$(echo $service | cut -d: -f2)
-    
-    if curl -f http://localhost:$port/actuator/health >/dev/null 2>&1; then
-        echo -e "${GREEN}✅ $name is healthy${NC}"
-    else
-        echo -e "${RED}❌ $name is not responding${NC}"
-    fi
-done
-
-echo -e "${GREEN}🎉 Deployment completed!${NC}"
-echo -e "${BLUE}📊 Service URLs:${NC}"
-echo -e "${YELLOW}  Frontend: http://localhost:8081${NC}"
-echo -e "${YELLOW}  API Gateway: http://localhost:8080${NC}"
-echo -e "${YELLOW}  Eureka Dashboard: http://localhost:8761${NC}"
-echo -e "${YELLOW}  User Service: http://localhost:8082${NC}"
-echo -e "${YELLOW}  Restaurant Service: http://localhost:8083${NC}"
-echo -e "${YELLOW}  Order Service: http://localhost:8085${NC}"
-echo -e "${YELLOW}  Delivery Service: http://localhost:8084${NC}"
-echo -e "${YELLOW}  Admin Service: http://localhost:8087${NC}"
-
+echo -e "${GREEN}✅ Deployment completed successfully!${NC}"
+echo ""
+echo -e "${BLUE}📋 Deployment Summary:${NC}"
+echo -e "Environment: $ENVIRONMENT"
+echo -e "Registry: $REGISTRY"
+echo -e "Image: $IMAGE_NAME:$TAG"
+echo -e "Namespace: $NAMESPACE"
+echo ""
+echo -e "${BLUE}🔗 Access URLs:${NC}"
+kubectl get services -n $NAMESPACE -o wide
