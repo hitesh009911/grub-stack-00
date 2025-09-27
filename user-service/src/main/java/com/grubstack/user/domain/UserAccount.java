@@ -29,6 +29,9 @@ public class UserAccount {
 	@Column(nullable = false)
 	private Instant createdAt;
 
+	@Column
+	private String address;
+
 	public Long getId() { return id; }
 	public void setId(Long id) { this.id = id; }
 
@@ -46,6 +49,9 @@ public class UserAccount {
 
 	public Instant getCreatedAt() { return createdAt; }
 	public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+	public String getAddress() { return address; }
+	public void setAddress(String address) { this.address = address; }
 }
 
 

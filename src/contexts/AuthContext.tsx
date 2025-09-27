@@ -8,6 +8,7 @@ interface User {
   role: 'customer' | 'restaurant' | 'delivery' | 'admin';
   phone?: string;
   avatar?: string;
+  address?: string;
 }
 
 interface AuthContextType {
@@ -15,6 +16,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (userData: RegisterData) => Promise<void>;
+  updateUser: (updatedUser: User) => void;
   isLoading: boolean;
 }
 
@@ -24,6 +26,7 @@ interface RegisterData {
   name: string;
   role: 'customer' | 'restaurant' | 'delivery';
   phone?: string;
+  address?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -94,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password: userData.password,
         fullName: userData.name,
         roles: [backendRole],
+        address: userData.address,
       });
 
       const roles: string[] = Array.isArray(data.roles) ? data.roles : [];
@@ -109,6 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: data.fullName ?? userData.name,
         role: mappedRole,
         phone: userData.phone,
+        address: userData.address,
       };
 
       setUser(newUser);
@@ -135,8 +140,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('grub-stack-user');
   };
 
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem('grub-stack-user', JSON.stringify(updatedUser));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, register, updateUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

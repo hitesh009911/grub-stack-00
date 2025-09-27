@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Deleted - GrubStack Admin</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            margin: 0;
+        }
+        .content {
+            padding: 30px;
+        }
+        .status-message {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .account-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .value {
+            color: #6c757d;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+        .highlight {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">GrubStack</div>
+            <h1 class="title">Account Deleted</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear <span class="highlight" th:text="${adminName}">Admin Name</span>,</p>
+            
+            <div class="status-message">
+                <h3>⚠️ Account Permanently Deleted</h3>
+                <p>Your admin account has been permanently deleted from the GrubStack system and can no longer be recovered.</p>
+            </div>
+            
+            <div class="account-info">
+                <div class="info-item">
+                    <span class="label">Email:</span>
+                    <span class="value" th:text="${adminEmail}">admin@grubstack.com</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Status:</span>
+                    <span class="value" style="color: #dc3545; font-weight: bold;">DELETED</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Deleted On:</span>
+                    <span class="value" th:text="${#dates.format(#dates.createNow(), 'MMMM dd, yyyy \'at\' HH:mm')}">January 01, 2025 at 12:00</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Reason:</span>
+                    <span class="value" th:text="${reason}">Account deleted by system administrator</span>
+                </div>
+            </div>
+            
+            <h3>What this means:</h3>
+            <ul>
+                <li>Your admin account has been permanently removed from the system</li>
+                <li>All administrative access has been revoked</li>
+                <li>Your account data has been deleted and cannot be recovered</li>
+                <li>You will no longer receive any system notifications</li>
+            </ul>
+            
+            <p>We want to take this opportunity to thank you for your service as a GrubStack administrator. Your contributions to our platform were appreciated.</p>
+            
+            <p>If you believe this action was taken in error, please contact our support team immediately at <a href="mailto:support@grubstack.com">support@grubstack.com</a>.</p>
+            
+            <p>We wish you all the best in your future endeavors.</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>GrubStack Admin Team</strong></p>
+            <p>Email: support@grubstack.com | Phone: 1-800-GRUBSTACK</p>
+            <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> GrubStack. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

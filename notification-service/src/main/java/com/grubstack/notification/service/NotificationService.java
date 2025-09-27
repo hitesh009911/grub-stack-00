@@ -90,6 +90,156 @@ public class NotificationService {
         sendNotification(notification);
     }
     
+    // Welcome email method (similar to sendOrderConfirmation)
+    public void sendWelcomeEmail(String userEmail, String userName) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("userName", userName);
+        templateData.put("userEmail", userEmail);
+        templateData.put("registrationDate", java.time.LocalDateTime.now().toString());
+        
+        NotificationRequest notification = new NotificationRequest(
+            NotificationRequest.NotificationType.WELCOME_EMAIL,
+            NotificationRequest.NotificationChannel.EMAIL,
+            userEmail,
+            "Welcome to GrubStack! 🎉",
+            "Welcome to GrubStack! We're excited to have you on board. Start exploring amazing restaurants and place your first order!"
+        );
+        
+        notification.setNotificationId("welcome-" + UUID.randomUUID().toString());
+        notification.setTemplateId("welcome-email");
+        notification.setTemplateData(templateData);
+        notification.setPriority(NotificationRequest.NotificationPriority.NORMAL);
+        
+        sendEmailNotification(notification);
+    }
+    
+    // Admin creation notification method
+    public void sendAdminCreationNotification(String adminEmail, String adminName, String password, String role) {
+        logger.info("Sending admin creation notification to: {}", adminEmail);
+        
+        try {
+            Map<String, Object> templateData = new HashMap<>();
+            templateData.put("adminName", adminName);
+            templateData.put("adminEmail", adminEmail);
+            templateData.put("password", password);
+            templateData.put("role", role);
+            templateData.put("creationDate", java.time.LocalDateTime.now().toString());
+            
+            NotificationRequest notification = new NotificationRequest(
+                NotificationRequest.NotificationType.ADMIN_CREATION,
+                NotificationRequest.NotificationChannel.EMAIL,
+                adminEmail,
+                "Welcome to GrubStack Admin Panel! 👑",
+                "Your admin account has been created successfully. You now have access to the GrubStack admin panel with " + role + " privileges."
+            );
+            
+            notification.setNotificationId("admin-creation-" + UUID.randomUUID().toString());
+            notification.setTemplateId("admin-creation");
+            notification.setTemplateData(templateData);
+            notification.setPriority(NotificationRequest.NotificationPriority.HIGH);
+            
+            sendEmailNotification(notification);
+            logger.info("Admin creation notification sent to: {}", adminEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send admin creation notification to: {}", adminEmail, e);
+        }
+    }
+    
+    // Delivery agent registration acknowledgment method
+    public void sendDeliveryAgentRegistrationAcknowledgment(String agentEmail, String agentName, String phone, String vehicleType) {
+        logger.info("Sending delivery agent registration acknowledgment to: {}", agentEmail);
+        
+        try {
+            Map<String, Object> templateData = new HashMap<>();
+            templateData.put("agentName", agentName);
+            templateData.put("agentEmail", agentEmail);
+            templateData.put("phone", phone);
+            templateData.put("vehicleType", vehicleType);
+            templateData.put("registrationDate", java.time.LocalDateTime.now().toString());
+            
+            NotificationRequest notification = new NotificationRequest(
+                NotificationRequest.NotificationType.DELIVERY_AGENT_REGISTRATION,
+                NotificationRequest.NotificationChannel.EMAIL,
+                agentEmail,
+                "Application Received - GrubStack Delivery 🚚",
+                "Thank you for your interest in joining the GrubStack delivery team! We have successfully received your application and it is now under review."
+            );
+            
+            notification.setNotificationId("delivery-agent-registration-" + UUID.randomUUID().toString());
+            notification.setTemplateId("delivery-agent-registration");
+            notification.setTemplateData(templateData);
+            notification.setPriority(NotificationRequest.NotificationPriority.NORMAL);
+            
+            sendEmailNotification(notification);
+            logger.info("Delivery agent registration acknowledgment sent to: {}", agentEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send delivery agent registration acknowledgment to: {}", agentEmail, e);
+        }
+    }
+    
+    // Delivery agent approval notification method
+    public void sendDeliveryAgentApprovalNotification(String agentEmail, String agentName, String loginPassword) {
+        logger.info("Sending delivery agent approval notification to: {}", agentEmail);
+        
+        try {
+            Map<String, Object> templateData = new HashMap<>();
+            templateData.put("agentName", agentName);
+            templateData.put("agentEmail", agentEmail);
+            templateData.put("loginPassword", loginPassword);
+            templateData.put("loginUrl", "http://localhost:5173/delivery/login");
+            templateData.put("approvalDate", java.time.LocalDateTime.now().toString());
+            
+            NotificationRequest notification = new NotificationRequest(
+                NotificationRequest.NotificationType.DELIVERY_AGENT_APPROVED,
+                NotificationRequest.NotificationChannel.EMAIL,
+                agentEmail,
+                "Application Approved - Welcome to GrubStack! 🎉",
+                "Congratulations! Your application to become a delivery agent with GrubStack has been approved! You can now start delivering orders and earning money."
+            );
+            
+            notification.setNotificationId("delivery-agent-approved-" + UUID.randomUUID().toString());
+            notification.setTemplateId("delivery-agent-approved");
+            notification.setTemplateData(templateData);
+            notification.setPriority(NotificationRequest.NotificationPriority.HIGH);
+            
+            sendEmailNotification(notification);
+            logger.info("Delivery agent approval notification sent to: {}", agentEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send delivery agent approval notification to: {}", agentEmail, e);
+        }
+    }
+    
+    // Delivery agent rejection notification method
+    public void sendDeliveryAgentRejectionNotification(String agentEmail, String agentName, String reason) {
+        logger.info("Sending delivery agent rejection notification to: {}", agentEmail);
+        
+        try {
+            Map<String, Object> templateData = new HashMap<>();
+            templateData.put("agentName", agentName);
+            templateData.put("agentEmail", agentEmail);
+            templateData.put("reason", reason);
+            templateData.put("rejectionDate", java.time.LocalDateTime.now().toString());
+            
+            NotificationRequest notification = new NotificationRequest(
+                NotificationRequest.NotificationType.DELIVERY_AGENT_REJECTED,
+                NotificationRequest.NotificationChannel.EMAIL,
+                agentEmail,
+                "Application Update - GrubStack Delivery",
+                "Thank you for your interest in joining the GrubStack delivery team. Unfortunately, we cannot approve your application at this time."
+            );
+            
+            notification.setNotificationId("delivery-agent-rejected-" + UUID.randomUUID().toString());
+            notification.setTemplateId("delivery-agent-rejected");
+            notification.setTemplateData(templateData);
+            notification.setPriority(NotificationRequest.NotificationPriority.NORMAL);
+            
+            sendEmailNotification(notification);
+            logger.info("Delivery agent rejection notification sent to: {}", agentEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send delivery agent rejection notification to: {}", agentEmail, e);
+        }
+    }
+    
     private void sendDeliveryAssigned(DeliveryEvent event) {
         Map<String, Object> templateData = new HashMap<>();
         templateData.put("orderId", event.getOrderId());
@@ -210,11 +360,45 @@ public class NotificationService {
         }
     }
     
+    private void sendEmailNotification(NotificationRequest notification) {
+        try {
+            // Send to email-notifications topic (working approach)
+            kafkaTemplate.send("email-notifications", notification.getNotificationId(), notification);
+            logger.info("Email notification sent to Kafka: {}", notification);
+        } catch (Exception e) {
+            logger.error("Error sending email notification to Kafka: {}", notification, e);
+        }
+    }
+    
     // Direct notification sending (for immediate processing)
     public void sendDirectNotification(NotificationRequest notification) {
+        logger.info("=== SEND DIRECT NOTIFICATION DEBUG ===");
+        logger.info("Notification ID: {}", notification.getNotificationId());
+        logger.info("Type: {}", notification.getType());
+        logger.info("Channel: {}", notification.getChannel());
+        logger.info("Recipient: {}", notification.getRecipient());
+        
+        try {
+            // Process notification directly (same as processNotificationDirectly)
+            processNotificationDirectly(notification);
+            logger.info("Notification processed directly: {}", notification.getNotificationId());
+        } catch (Exception e) {
+            logger.error("Error in sendDirectNotification: {}", notification, e);
+        }
+    }
+    
+    // Process notification directly (called by Kafka consumer)
+    public void processNotificationDirectly(NotificationRequest notification) {
+        logger.info("=== PROCESS NOTIFICATION DIRECTLY ===");
+        logger.info("Notification ID: {}", notification.getNotificationId());
+        logger.info("Type: {}", notification.getType());
+        logger.info("Channel: {}", notification.getChannel());
+        logger.info("Recipient: {}", notification.getRecipient());
+        
         try {
             // Save notification to database
             Notification notificationEntity = saveNotificationToDatabaseInternal(notification);
+            logger.info("Notification saved to database with ID: {}", notificationEntity.getId());
             
             // Send notification based on channel
             boolean sent = false;
@@ -223,8 +407,10 @@ public class NotificationService {
             try {
                 switch (notification.getChannel()) {
                     case EMAIL:
+                        logger.info("Sending email to: {}", notification.getRecipient());
                         emailService.sendEmail(notification);
                         sent = true;
+                        logger.info("Email sent successfully to: {}", notification.getRecipient());
                         break;
                     case SMS:
                         // TODO: Implement SMS service
@@ -260,7 +446,7 @@ public class NotificationService {
             notificationRepository.save(notificationEntity);
             
         } catch (Exception e) {
-            logger.error("Error processing direct notification: {}", notification, e);
+            logger.error("Error processing notification directly: {}", notification, e);
         }
     }
     
@@ -285,7 +471,9 @@ public class NotificationService {
             notification.setMetadata(request.getMetadata().toString());
         }
         
-        return notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        logger.info("Notification saved to database with ID: {} and notificationId: {}", saved.getId(), saved.getNotificationId());
+        return saved;
     }
     
     // Public method for external use
@@ -378,5 +566,244 @@ public class NotificationService {
     // Get notification count by user and status
     public long getNotificationCountByUserAndStatus(Long userId, Notification.NotificationStatus status) {
         return notificationRepository.countByUserIdAndStatus(userId, status);
+    }
+    
+    // Send order cancelled notification
+    public void sendOrderCancelledNotification(Long orderId, Long userId, String customerEmail, String restaurantName) {
+        logger.info("Sending order cancelled notification for order: {}", orderId);
+        
+        try {
+            Map<String, Object> templateData = new HashMap<>();
+            templateData.put("orderId", orderId);
+            templateData.put("customerName", "Customer");
+            templateData.put("restaurantName", restaurantName);
+            templateData.put("cancellationTime", java.time.LocalDateTime.now().toString());
+
+            NotificationRequest notification = new NotificationRequest();
+            notification.setType(NotificationRequest.NotificationType.DELIVERY_CANCELLED);
+            notification.setChannel(NotificationRequest.NotificationChannel.EMAIL);
+            notification.setRecipient(customerEmail);
+            notification.setSubject("Order Cancelled - Order #" + orderId);
+            notification.setMessage("Your order #" + orderId + " has been cancelled. If you have any questions, please contact " + restaurantName + ".");
+            notification.setNotificationId("order-cancelled-" + orderId + "-" + UUID.randomUUID().toString());
+            notification.setTemplateId("order-cancelled");
+            notification.setTemplateData(templateData);
+            notification.setPriority(NotificationRequest.NotificationPriority.NORMAL);
+
+            sendDirectNotification(notification);
+            logger.info("Order cancelled notification sent for order: {}", orderId);
+        } catch (Exception e) {
+            logger.error("Failed to send order cancelled notification for order: {}", orderId, e);
+        }
+    }
+    
+    // Delivery agent deletion notification
+    public void sendDeliveryAgentDeletionNotification(String agentEmail, String agentName, String reason) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("agentName", agentName);
+        templateData.put("agentEmail", agentEmail);
+        templateData.put("reason", reason);
+        
+        NotificationRequest notification = new NotificationRequest(
+            NotificationRequest.NotificationType.DELIVERY_AGENT_DELETED,
+            NotificationRequest.NotificationChannel.EMAIL,
+            agentEmail,
+            "Account Deleted - GrubStack Delivery",
+            "Your delivery agent account has been permanently deleted from our system."
+        );
+        
+        notification.setNotificationId("agent-deletion-" + UUID.randomUUID().toString());
+        notification.setTemplateId("delivery-agent-deleted");
+        notification.setTemplateData(templateData);
+        notification.setPriority(NotificationRequest.NotificationPriority.HIGH);
+        
+        sendNotification(notification);
+    }
+    
+    // Admin welcome notification
+    public void sendAdminWelcomeNotification(String adminEmail, String adminName, String temporaryPassword) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("adminName", adminName);
+        templateData.put("adminEmail", adminEmail);
+        templateData.put("temporaryPassword", temporaryPassword);
+        
+        NotificationRequest notification = new NotificationRequest(
+            NotificationRequest.NotificationType.ADMIN_WELCOME,
+            NotificationRequest.NotificationChannel.EMAIL,
+            adminEmail,
+            "Welcome to GrubStack Admin Panel",
+            "Your admin account has been created successfully."
+        );
+        
+        notification.setNotificationId("admin-welcome-" + UUID.randomUUID().toString());
+        notification.setTemplateId("admin-welcome");
+        notification.setTemplateData(templateData);
+        notification.setPriority(NotificationRequest.NotificationPriority.HIGH);
+        
+        sendNotification(notification);
+    }
+    
+    // Admin account deactivated notification
+    public void sendAdminAccountDeactivatedNotification(String adminEmail, String adminName, String reason) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("adminName", adminName);
+        templateData.put("adminEmail", adminEmail);
+        templateData.put("reason", reason);
+        
+        NotificationRequest notification = new NotificationRequest(
+            NotificationRequest.NotificationType.ADMIN_ACCOUNT_DEACTIVATED,
+            NotificationRequest.NotificationChannel.EMAIL,
+            adminEmail,
+            "Account Deactivated - GrubStack Admin",
+            "Your admin account has been deactivated."
+        );
+        
+        notification.setNotificationId("admin-deactivated-" + UUID.randomUUID().toString());
+        notification.setTemplateId("admin-account-deactivated");
+        notification.setTemplateData(templateData);
+        notification.setPriority(NotificationRequest.NotificationPriority.HIGH);
+        
+        sendNotification(notification);
+    }
+    
+    // Admin account reactivated notification
+    public void sendAdminAccountReactivatedNotification(String adminEmail, String adminName) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("adminName", adminName);
+        templateData.put("adminEmail", adminEmail);
+        
+        NotificationRequest notification = new NotificationRequest(
+            NotificationRequest.NotificationType.ADMIN_ACCOUNT_REACTIVATED,
+            NotificationRequest.NotificationChannel.EMAIL,
+            adminEmail,
+            "Account Reactivated - GrubStack Admin",
+            "Your admin account has been reactivated."
+        );
+        
+        notification.setNotificationId("admin-reactivated-" + UUID.randomUUID().toString());
+        notification.setTemplateId("admin-account-reactivated");
+        notification.setTemplateData(templateData);
+        notification.setPriority(NotificationRequest.NotificationPriority.HIGH);
+        
+        sendNotification(notification);
+    }
+    
+    // Admin account deleted notification
+    public void sendAdminAccountDeletedNotification(String adminEmail, String adminName, String reason) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("adminName", adminName);
+        templateData.put("adminEmail", adminEmail);
+        templateData.put("reason", reason);
+        
+        NotificationRequest notification = new NotificationRequest(
+            NotificationRequest.NotificationType.ADMIN_ACCOUNT_DELETED,
+            NotificationRequest.NotificationChannel.EMAIL,
+            adminEmail,
+            "Account Deleted - GrubStack Admin",
+            "Your admin account has been permanently deleted."
+        );
+        
+        notification.setNotificationId("admin-deleted-" + UUID.randomUUID().toString());
+        notification.setTemplateId("admin-account-deleted");
+        notification.setTemplateData(templateData);
+        notification.setPriority(NotificationRequest.NotificationPriority.HIGH);
+        
+        sendNotification(notification);
+    }
+    
+    // Admin profile updated notification
+    public void sendAdminProfileUpdatedNotification(String adminEmail, String adminName, Map<String, Object> changes) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("adminName", adminName);
+        templateData.put("adminEmail", adminEmail);
+        templateData.put("changes", changes);
+        
+        NotificationRequest notification = new NotificationRequest(
+            NotificationRequest.NotificationType.ADMIN_PROFILE_UPDATED,
+            NotificationRequest.NotificationChannel.EMAIL,
+            adminEmail,
+            "Profile Updated - GrubStack Admin",
+            "Your admin profile has been updated successfully."
+        );
+        
+        notification.setNotificationId("admin-profile-updated-" + UUID.randomUUID().toString());
+        notification.setTemplateId("admin-profile-updated");
+        notification.setTemplateData(templateData);
+        notification.setPriority(NotificationRequest.NotificationPriority.NORMAL);
+        
+        sendNotification(notification);
+    }
+    
+    // Restaurant registration acknowledgment notification
+    public void sendRestaurantRegistrationAcknowledgment(String email, String restaurantName, String ownerName, String phone, String address) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("email", email);
+        templateData.put("restaurantName", restaurantName);
+        templateData.put("ownerName", ownerName);
+        templateData.put("phone", phone);
+        templateData.put("address", address);
+        
+        NotificationRequest notification = new NotificationRequest(
+            NotificationRequest.NotificationType.RESTAURANT_REGISTRATION_ACKNOWLEDGMENT,
+            NotificationRequest.NotificationChannel.EMAIL,
+            email,
+            "Registration Received - GrubStack Restaurant",
+            "Thank you for registering your restaurant with GrubStack."
+        );
+        
+        notification.setNotificationId("restaurant-registration-ack-" + UUID.randomUUID().toString());
+        notification.setTemplateId("restaurant-registration-acknowledgment");
+        notification.setTemplateData(templateData);
+        notification.setPriority(NotificationRequest.NotificationPriority.NORMAL);
+        
+        sendNotification(notification);
+    }
+    
+    // Restaurant approved notification
+    public void sendRestaurantApprovedNotification(String email, String restaurantName, String ownerName, String password) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("email", email);
+        templateData.put("restaurantName", restaurantName);
+        templateData.put("ownerName", ownerName);
+        templateData.put("password", password);
+        
+        NotificationRequest notification = new NotificationRequest(
+            NotificationRequest.NotificationType.RESTAURANT_APPROVED,
+            NotificationRequest.NotificationChannel.EMAIL,
+            email,
+            "Restaurant Approved - GrubStack",
+            "Congratulations! Your restaurant has been approved and is now live."
+        );
+        
+        notification.setNotificationId("restaurant-approved-" + UUID.randomUUID().toString());
+        notification.setTemplateId("restaurant-approved");
+        notification.setTemplateData(templateData);
+        notification.setPriority(NotificationRequest.NotificationPriority.HIGH);
+        
+        sendNotification(notification);
+    }
+    
+    // Restaurant deleted notification
+    public void sendRestaurantDeletedNotification(String email, String restaurantName, String ownerName, String reason) {
+        Map<String, Object> templateData = new HashMap<>();
+        templateData.put("email", email);
+        templateData.put("restaurantName", restaurantName);
+        templateData.put("ownerName", ownerName);
+        templateData.put("reason", reason);
+        
+        NotificationRequest notification = new NotificationRequest(
+            NotificationRequest.NotificationType.RESTAURANT_DELETED,
+            NotificationRequest.NotificationChannel.EMAIL,
+            email,
+            "Restaurant Deleted - GrubStack",
+            "Your restaurant account has been deleted from GrubStack."
+        );
+        
+        notification.setNotificationId("restaurant-deleted-" + UUID.randomUUID().toString());
+        notification.setTemplateId("restaurant-deleted");
+        notification.setTemplateData(templateData);
+        notification.setPriority(NotificationRequest.NotificationPriority.HIGH);
+        
+        sendNotification(notification);
     }
 }

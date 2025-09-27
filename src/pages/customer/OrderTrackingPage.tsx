@@ -4,12 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin, User, Phone, Car, CheckCircle, Package, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useDeliveryUpdates } from '@/hooks/useDeliveryUpdates';
 import { useOrderUpdates } from '@/hooks/useOrderUpdates';
 import DeliveryProgress from '@/components/delivery/DeliveryProgress';
 import OrderStatusTracker from '@/components/OrderStatusTracker';
+import TruckLoader from '@/components/ui/TruckLoader';
 
 interface DeliveryAgent {
   id: number;
@@ -129,9 +131,9 @@ const OrderTrackingPage = () => {
         <div className="max-w-2xl mx-auto">
           <Card>
             <CardContent className="p-8">
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="ml-3">Loading order details...</span>
+              <div className="flex flex-col items-center justify-center">
+                <TruckLoader />
+                <span className="mt-4 text-muted-foreground">Loading order details...</span>
               </div>
             </CardContent>
           </Card>
@@ -167,7 +169,7 @@ const OrderTrackingPage = () => {
                     <strong>Status:</strong> Order Confirmed
                   </p>
                   <p className="text-sm text-gray-600">
-                    <strong>Note:</strong> Delivery tracking service is temporarily unavailable
+                    <strong>Note:</strong> Delivery details will be updated soon
                   </p>
                 </div>
               </div>
@@ -207,7 +209,28 @@ const OrderTrackingPage = () => {
     );
   }
 
-  const statusConfig = getStatusConfig(delivery.status);
+  // Handle case where delivery is null but order exists
+  if (!delivery && order) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h2 className="text-2xl font-bold mb-4">Delivery Not Found</h2>
+              <p className="text-muted-foreground mb-6">
+                The delivery for this order could not be found. The order may still be being processed.
+              </p>
+              <Button onClick={() => navigate('/orders')}>
+                Back to Orders
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const statusConfig = getStatusConfig(delivery?.status || 'PENDING');
   const StatusIcon = statusConfig.icon;
 
   return (
@@ -232,7 +255,7 @@ const OrderTrackingPage = () => {
             createdAt={order.createdAt}
             estimatedTime={delivery?.estimatedDeliveryTime}
             agent={delivery?.agent}
-            restaurantName="Restaurant Name" // In real app, get from restaurant service
+            restaurantLocation={delivery?.pickupAddress}
             className="mb-6"
           />
         )}
@@ -249,9 +272,9 @@ const OrderTrackingPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <DeliveryProgress status={delivery.status} />
+              <DeliveryProgress status={delivery?.status || 'PENDING'} />
               
-              {delivery.estimatedDeliveryTime && getStatusConfig(delivery.status).progress < 100 && (
+              {delivery?.estimatedDeliveryTime && getStatusConfig(delivery?.status || 'PENDING').progress < 100 && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
                   <Clock className="h-4 w-4" />
                   <span>Estimated delivery time: {getEstimatedTime()}</span>
@@ -262,7 +285,7 @@ const OrderTrackingPage = () => {
         )}
 
         {/* Delivery Agent Info */}
-        {delivery.agent && (
+        {delivery?.agent && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -274,24 +297,24 @@ const OrderTrackingPage = () => {
               <div className="flex items-center gap-4">
                 <Avatar className="h-12 w-12">
                   <AvatarFallback>
-                    {delivery.agent.name.split(' ').map(n => n[0]).join('')}
+                    {delivery?.agent?.name?.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <h3 className="font-semibold">{delivery.agent.name}</h3>
+                  <h3 className="font-semibold">{delivery?.agent?.name}</h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Phone className="h-3 w-3" />
-                      {delivery.agent.phone}
+                      {delivery?.agent?.phone}
                     </div>
                     <div className="flex items-center gap-1">
                       <Car className="h-3 w-3" />
-                      {delivery.agent.vehicleType}
+                      {delivery?.agent?.vehicleType}
                     </div>
                   </div>
                 </div>
                 <Badge variant="outline">
-                  {delivery.agent.status}
+                  {delivery?.agent?.status}
                 </Badge>
               </div>
             </CardContent>
@@ -310,14 +333,14 @@ const OrderTrackingPage = () => {
             <div>
               <h4 className="font-semibold mb-2">Pickup Address</h4>
               <p className="text-sm text-muted-foreground">
-                {delivery.pickupAddress}
+                {delivery?.pickupAddress}
               </p>
             </div>
             <Separator />
             <div>
               <h4 className="font-semibold mb-2">Delivery Address</h4>
               <p className="text-sm text-muted-foreground">
-                {delivery.deliveryAddress}
+                {delivery?.deliveryAddress}
               </p>
             </div>
           </CardContent>
@@ -338,13 +361,13 @@ const OrderTrackingPage = () => {
                 <div className="flex-1">
                   <p className="font-medium">Order Placed</p>
                   <p className="text-sm text-muted-foreground">
-                    {formatTime(delivery.createdAt)}
+                    {formatTime(delivery?.createdAt || '')}
                   </p>
                 </div>
               </div>
 
               {/* Agent Assigned */}
-              {delivery.assignedAt && (
+              {delivery?.assignedAt && (
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-blue-500 text-white">
                     <User className="h-4 w-4" />
@@ -352,14 +375,14 @@ const OrderTrackingPage = () => {
                   <div className="flex-1">
                     <p className="font-medium">Agent Assigned</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatTime(delivery.assignedAt)}
+                      {formatTime(delivery?.assignedAt || '')}
                     </p>
                   </div>
                 </div>
               )}
 
               {/* Picked Up */}
-              {delivery.pickedUpAt && (
+              {delivery?.pickedUpAt && (
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-orange-500 text-white">
                     <Truck className="h-4 w-4" />
@@ -367,14 +390,14 @@ const OrderTrackingPage = () => {
                   <div className="flex-1">
                     <p className="font-medium">Order Picked Up</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatTime(delivery.pickedUpAt)}
+                      {formatTime(delivery?.pickedUpAt || '')}
                     </p>
                   </div>
                 </div>
               )}
 
               {/* Delivered */}
-              {delivery.deliveredAt && (
+              {delivery?.deliveredAt && (
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-green-500 text-white">
                     <CheckCircle className="h-4 w-4" />
@@ -382,7 +405,7 @@ const OrderTrackingPage = () => {
                   <div className="flex-1">
                     <p className="font-medium">Order Delivered</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatTime(delivery.deliveredAt)}
+                      {formatTime(delivery?.deliveredAt || '')}
                     </p>
                   </div>
                 </div>
@@ -392,13 +415,13 @@ const OrderTrackingPage = () => {
         </Card>
 
         {/* Notes */}
-        {delivery.notes && (
+        {delivery?.notes && (
           <Card>
             <CardHeader>
               <CardTitle>Special Instructions</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm">{delivery.notes}</p>
+              <p className="text-sm">{delivery?.notes}</p>
             </CardContent>
           </Card>
         )}

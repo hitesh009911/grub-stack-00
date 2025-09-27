@@ -10,9 +10,12 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/deliveries")
@@ -21,10 +24,12 @@ public class DeliveryController {
     
     private final DeliveryService deliveryService;
     private final NotificationService notificationService;
+    private final RestTemplate restTemplate;
     
     public DeliveryController(DeliveryService deliveryService, NotificationService notificationService) {
         this.deliveryService = deliveryService;
         this.notificationService = notificationService;
+        this.restTemplate = new RestTemplate();
     }
     
     // Delivery Management
@@ -132,8 +137,9 @@ public class DeliveryController {
     
     // Agent Management
     @PostMapping("/agents")
-    public ResponseEntity<DeliveryAgent> createAgent(@Valid @RequestBody CreateAgentRequest request) {
+    public ResponseEntity<?> createAgent(@RequestBody CreateAgentRequest request) {
         try {
+            System.out.println("Creating agent with: " + request);
             DeliveryAgent agent = deliveryService.createAgent(
                 request.name(),
                 request.email(),
@@ -142,16 +148,40 @@ public class DeliveryController {
                 request.licenseNumber(),
                 request.password()
             );
+            System.out.println("Agent created successfully: " + agent.getId());
+            
+            // Send registration acknowledgment notification via direct endpoint (outside transaction)
+            try {
+                restTemplate.postForObject(
+                    "http://localhost:8089/notifications/delivery-agent-registration?email={email}&agentName={name}&phone={phone}&vehicleType={vehicleType}",
+                    null,
+                    Object.class,
+                    agent.getEmail(),
+                    agent.getName(),
+                    agent.getPhone(),
+                    agent.getVehicleType()
+                );
+            } catch (Exception e) {
+                System.err.println("Failed to send registration acknowledgment: " + e.getMessage());
+                // Don't fail the request if notification fails
+            }
+            
             return ResponseEntity.ok(agent);
         } catch (IllegalArgumentException ex) {
+            System.err.println("IllegalArgumentException: " + ex.getMessage());
             return ResponseEntity.badRequest()
-                    .body(null);
+                    .body(new HashMap<String, String>() {{ put("error", ex.getMessage()); }});
+        } catch (Exception ex) {
+            System.err.println("Unexpected error: " + ex.getMessage());
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new HashMap<String, String>() {{ put("error", ex.getMessage()); }});
         }
     }
     
     // Agent Management (Admin creates agent without password)
     @PostMapping("/agents/admin")
-    public ResponseEntity<DeliveryAgent> createAgentByAdmin(@Valid @RequestBody CreateAgentByAdminRequest request) {
+    public ResponseEntity<?> createAgentByAdmin(@Valid @RequestBody CreateAgentByAdminRequest request) {
         try {
             DeliveryAgent agent = deliveryService.createAgentByAdmin(
                 request.name(),
@@ -173,12 +203,17 @@ public class DeliveryController {
             return ResponseEntity.ok(agent);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest()
-                    .body(null);
+                    .body(new HashMap<String, String>() {{ put("error", ex.getMessage()); }});
         }
     }
     
     @GetMapping("/agents")
-    public ResponseEntity<List<DeliveryAgent>> getAllAgents() {
+    public ResponseEntity<List<DeliveryAgent>> getAllAgents(@RequestParam(value = "email", required = false) String email) {
+        if (email != null && !email.isEmpty()) {
+            return deliveryService.getAgentByEmail(email)
+                    .map(agent -> ResponseEntity.ok(List.of(agent)))
+                    .orElse(ResponseEntity.notFound().build());
+        }
         return ResponseEntity.ok(deliveryService.getAllAgents());
     }
     
@@ -187,27 +222,80 @@ public class DeliveryController {
         return ResponseEntity.ok(deliveryService.getAvailableAgents());
     }
     
+    @GetMapping("/agents/pending")
+    public ResponseEntity<List<DeliveryAgent>> getPendingAgents() {
+        return ResponseEntity.ok(deliveryService.getPendingAgents());
+    }
+    
     @PutMapping("/agents/{agentId}/status")
-    public ResponseEntity<DeliveryAgent> updateAgentStatus(@PathVariable("agentId") Long agentId,
+    public ResponseEntity<?> updateAgentStatus(@PathVariable("agentId") Long agentId,
                                                          @RequestParam("status") DeliveryAgent.AgentStatus status) {
         try {
             DeliveryAgent agent = deliveryService.updateAgentStatus(agentId, status);
             return ResponseEntity.ok(agent);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest()
-                    .body(null);
+                    .body(new HashMap<String, String>() {{ put("error", ex.getMessage()); }});
+        }
+    }
+    
+    @PutMapping("/agents/{agentId}/approve")
+    public ResponseEntity<?> approveAgent(@PathVariable("agentId") Long agentId) {
+        try {
+            DeliveryAgent agent = deliveryService.approveAgent(agentId);
+            
+            // Send approval notification via direct endpoint
+            try {
+                restTemplate.postForObject(
+                    "http://localhost:8089/notifications/delivery-agent-approval?email={email}&agentName={name}&loginPassword={password}",
+                    null,
+                    Object.class,
+                    agent.getEmail(),
+                    agent.getName(),
+                    "delivery123"
+                );
+            } catch (Exception e) {
+                System.err.println("Failed to send approval notification: " + e.getMessage());
+            }
+            
+            return ResponseEntity.ok(agent);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest()
+                    .body(new HashMap<String, String>() {{ put("error", ex.getMessage()); }});
         }
     }
     
     @DeleteMapping("/agents/{agentId}")
-    public ResponseEntity<Void> deleteAgent(@PathVariable("agentId") Long agentId) {
+    public ResponseEntity<?> deleteAgent(@PathVariable("agentId") Long agentId) {
         try {
+            // Get agent details before deletion for notification
+            Optional<DeliveryAgent> agentOpt = deliveryService.getAgentById(agentId);
+            
+            if (agentOpt.isPresent()) {
+                DeliveryAgent agent = agentOpt.get();
+                // Send deletion notification via direct endpoint
+                try {
+                    restTemplate.postForObject(
+                        "http://localhost:8089/notifications/delivery-agent-deletion?email={email}&agentName={name}&reason={reason}",
+                        null,
+                        Object.class,
+                        agent.getEmail(),
+                        agent.getName(),
+                        "Account deleted by admin"
+                    );
+                } catch (Exception e) {
+                    System.err.println("Failed to send deletion notification: " + e.getMessage());
+                }
+            }
+            
             deliveryService.deleteAgent(agentId);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest()
+                    .body(new HashMap<String, String>() {{ put("error", ex.getMessage()); }});
         } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new HashMap<String, String>() {{ put("error", ex.getMessage()); }});
         }
     }
     
@@ -227,19 +315,7 @@ public class DeliveryController {
         @NotBlank String phone,
         @NotBlank String vehicleType,
         @NotBlank String licenseNumber
-    ) {
-        public CreateAgentRequest(String name, String email, String phone, String vehicleType, String licenseNumber) {
-            this(name, email, "delivery123", phone, vehicleType, licenseNumber);
-        }
-        public CreateAgentRequest(String name, String email, String password, String phone, String vehicleType, String licenseNumber) {
-            this.name = name;
-            this.email = email;
-            this.password = password;
-            this.phone = phone;
-            this.vehicleType = vehicleType;
-            this.licenseNumber = licenseNumber;
-        }
-    }
+    ) {}
     
     public record CreateAgentByAdminRequest(
         @NotBlank String name,

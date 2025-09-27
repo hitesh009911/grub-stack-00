@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Received - GrubStack Delivery</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+        .message {
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: #4b5563;
+        }
+        .application-details {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .application-details h3 {
+            margin: 0 0 15px 0;
+            color: #1f2937;
+            font-size: 18px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        .detail-value {
+            color: #6b7280;
+        }
+        .status-info {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .status-info h3 {
+            margin: 0 0 10px 0;
+            color: #92400e;
+            font-size: 16px;
+        }
+        .status-info p {
+            margin: 0;
+            color: #92400e;
+            font-size: 14px;
+        }
+        .next-steps {
+            background-color: #ecfdf5;
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .next-steps h3 {
+            margin: 0 0 15px 0;
+            color: #065f46;
+            font-size: 16px;
+        }
+        .next-steps ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #065f46;
+        }
+        .next-steps li {
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #e2e8f0;
+        }
+        .footer p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .contact-info {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f1f5f9;
+            border-radius: 6px;
+        }
+        .contact-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #475569;
+        }
+        .contact-info strong {
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🚚 GrubStack Delivery</div>
+            <div class="subtitle">Application Received</div>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">
+                Hello <strong th:text="${agentName}">Agent Name</strong>,
+            </div>
+            
+            <div class="message">
+                Thank you for your interest in joining the GrubStack delivery team! We have successfully received your application and it is now under review.
+            </div>
+            
+            <div class="application-details">
+                <h3>Application Details</h3>
+                <div class="detail-row">
+                    <div class="detail-label">Name:</div>
+                    <div class="detail-value" th:text="${agentName}">Agent Name</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Email:</div>
+                    <div class="detail-value" th:text="${agentEmail}">agent@example.com</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Phone:</div>
+                    <div class="detail-value" th:text="${phone}">+1234567890</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Vehicle Type:</div>
+                    <div class="detail-value" th:text="${vehicleType}">Bike</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Application Date:</div>
+                    <div class="detail-value" th:text="${registrationDate}">2025-01-01</div>
+                </div>
+            </div>
+            
+            <div class="status-info">
+                <h3>📋 Application Status: Under Review</h3>
+                <p>Our team is currently reviewing your application. This process typically takes 1-3 business days.</p>
+            </div>
+            
+            <div class="next-steps">
+                <h3>What Happens Next?</h3>
+                <ul>
+                    <li>Our team will review your application and documents</li>
+                    <li>We may contact you for additional information if needed</li>
+                    <li>You will receive an email notification once the review is complete</li>
+                    <li>If approved, you'll receive your login credentials and onboarding instructions</li>
+                </ul>
+            </div>
+            
+            <div class="message">
+                We appreciate your patience during this process. If you have any questions or need to update your application, please don't hesitate to contact us.
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Thank you for choosing GrubStack!</p>
+            <div class="contact-info">
+                <p><strong>Need Help?</strong></p>
+                <p>Email: <strong>admin@grubstack.com</strong></p>
+                <p>We're here to help with any questions you may have.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

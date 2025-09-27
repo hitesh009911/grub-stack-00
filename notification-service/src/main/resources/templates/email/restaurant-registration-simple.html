@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Registration Confirmation</title>
+</head>
+<body>
+    <h1>Restaurant Registration Confirmation</h1>
+    <p>Dear <strong th:text="${ownerName}">Owner Name</strong>,</p>
+    <p>Thank you for registering your restaurant with GrubStack!</p>
+    
+    <h3>Restaurant Details:</h3>
+    <p><strong>Restaurant Name:</strong> <span th:text="${restaurantName}">Restaurant Name</span></p>
+    <p><strong>Restaurant ID:</strong> <span th:text="${restaurantId}">Restaurant ID</span></p>
+    <p><strong>Email:</strong> <span th:text="${restaurantEmail}">restaurant@example.com</span></p>
+    <p><strong>Registration Date:</strong> <span th:text="${registrationDate}">2025-01-01</span></p>
+    <p><strong>Status:</strong> PENDING APPROVAL</p>
+    
+    <p>Our admin team will review your application and you'll receive an email once approved.</p>
+    <p>Thank you for joining GrubStack!</p>
+</body>
+</html>

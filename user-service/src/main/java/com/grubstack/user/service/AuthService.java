@@ -35,12 +35,17 @@ public class AuthService {
 		user.setCreatedAt(Instant.now());
 		UserAccount saved = userRepo.save(user);
 		
-		// Send welcome email asynchronously
+		// Send welcome email synchronously
 		System.out.println("=== AUTH SERVICE DEBUG ===");
 		System.out.println("User registered: " + saved.getId() + " - " + saved.getEmail() + " - " + saved.getFullName());
 		System.out.println("Calling sendWelcomeEmail...");
-		notificationService.sendWelcomeEmail(saved.getId(), saved.getEmail(), saved.getFullName());
-		System.out.println("sendWelcomeEmail called successfully");
+		try {
+			notificationService.sendWelcomeEmail(saved.getId(), saved.getEmail(), saved.getFullName()).get();
+			System.out.println("sendWelcomeEmail completed successfully");
+		} catch (Exception e) {
+			System.err.println("Error sending welcome email: " + e.getMessage());
+			e.printStackTrace();
+		}
 		
 		return new AuthDtos.UserResponse(saved.getId(), saved.getEmail(), saved.getFullName(), saved.getRoles());
 	}

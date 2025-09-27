@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate, Link } from 'react-router-dom';
+import { validatePhoneNumber, formatPhoneInput } from '@/utils/validation';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const RestaurantRegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -23,15 +25,29 @@ const RestaurantRegisterPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'phone') {
+      const formattedPhone = formatPhoneInput(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedPhone
+      }));
+      
+      // Validate phone number
+      const validation = validatePhoneNumber(formattedPhone);
+      setPhoneError(validation.isValid ? '' : validation.error || '');
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,6 +79,20 @@ const RestaurantRegisterPage: React.FC = () => {
         description: "Password must be at least 6 characters long"
       });
       return;
+    }
+
+    // Validate phone number
+    if (formData.phone) {
+      const validation = validatePhoneNumber(formData.phone);
+      if (!validation.isValid) {
+        setPhoneError(validation.error || '');
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: validation.error || 'Please enter a valid phone number.'
+        });
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -142,14 +172,19 @@ const RestaurantRegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      {/* Theme Toggle */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-2xl"
       >
-        <Card className="shadow-2xl border-0">
+        <Card className="shadow-2xl border-2 border-orange-500 bg-black shadow-orange-500/20">
           <CardHeader className="text-center pb-8">
             <motion.div
               initial={{ scale: 0 }}
@@ -160,10 +195,10 @@ const RestaurantRegisterPage: React.FC = () => {
               <ChefHat className="h-8 w-8 text-white" />
             </motion.div>
             
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+            <CardTitle className="text-2xl font-bold text-orange-500">
               Restaurant Registration
             </CardTitle>
-            <p className="text-muted-foreground">
+            <p className="text-gray-300">
               Join GrubStack and start serving delicious food
             </p>
           </CardHeader>
@@ -172,7 +207,7 @@ const RestaurantRegisterPage: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="restaurantName">Restaurant Name *</Label>
+                  <Label htmlFor="restaurantName" className="text-white">Restaurant Name *</Label>
                   <Input
                     id="restaurantName"
                     name="restaurantName"
@@ -180,12 +215,12 @@ const RestaurantRegisterPage: React.FC = () => {
                     value={formData.restaurantName}
                     onChange={handleInputChange}
                     required
-                    className="h-12"
+                    className="h-12 bg-black border-orange-500 text-white focus:border-orange-400 focus:ring-orange-400"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="ownerName">Owner Name *</Label>
+                  <Label htmlFor="ownerName" className="text-white">Owner Name *</Label>
                   <Input
                     id="ownerName"
                     name="ownerName"
@@ -193,12 +228,12 @@ const RestaurantRegisterPage: React.FC = () => {
                     value={formData.ownerName}
                     onChange={handleInputChange}
                     required
-                    className="h-12"
+                    className="h-12 bg-black border-orange-500 text-white focus:border-orange-400 focus:ring-orange-400"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address *</Label>
+                  <Label htmlFor="email" className="text-white">Email Address *</Label>
                   <Input
                     id="email"
                     name="email"
@@ -207,29 +242,32 @@ const RestaurantRegisterPage: React.FC = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="h-12"
+                    className="h-12 bg-black border-orange-500 text-white focus:border-orange-400 focus:ring-orange-400"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Label htmlFor="phone" className="text-white">Phone Number *</Label>
                   <Input
                     id="phone"
                     name="phone"
                     type="tel"
-                    placeholder="+91 98765 43210"
+                    placeholder="123-456-7890"
                     value={formData.phone}
                     onChange={handleInputChange}
                     required
-                    className="h-12"
+                    className={`h-12 bg-black border-orange-500 text-white focus:border-orange-400 focus:ring-orange-400 ${phoneError ? 'border-red-500' : ''}`}
                   />
+                  {phoneError && (
+                    <p className="text-sm text-red-400 mt-1">{phoneError}</p>
+                  )}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Restaurant Address *</Label>
+                <Label htmlFor="address" className="text-white">Restaurant Address *</Label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-orange-500" />
                   <Input
                     id="address"
                     name="address"
@@ -237,13 +275,13 @@ const RestaurantRegisterPage: React.FC = () => {
                     value={formData.address}
                     onChange={handleInputChange}
                     required
-                    className="h-12 pl-10"
+                    className="h-12 pl-10 bg-black border-orange-500 text-white focus:border-orange-400 focus:ring-orange-400"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Restaurant Description</Label>
+                <Label htmlFor="description" className="text-white">Restaurant Description</Label>
                 <Textarea
                   id="description"
                   name="description"
@@ -251,13 +289,13 @@ const RestaurantRegisterPage: React.FC = () => {
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={3}
-                  className="resize-none"
+                  className="resize-none bg-black border-orange-500 text-white focus:border-orange-400 focus:ring-orange-400"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password *</Label>
+                  <Label htmlFor="password" className="text-white">Password *</Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -267,7 +305,7 @@ const RestaurantRegisterPage: React.FC = () => {
                       value={formData.password}
                       onChange={handleInputChange}
                       required
-                      className="h-12 pr-12"
+                      className="h-12 pr-12 bg-black border-orange-500 text-white focus:border-orange-400 focus:ring-orange-400"
                     />
                     <Button
                       type="button"
@@ -277,16 +315,16 @@ const RestaurantRegisterPage: React.FC = () => {
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
+                        <EyeOff className="h-4 w-4 text-orange-500" />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 text-orange-500" />
                       )}
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                  <Label htmlFor="confirmPassword" className="text-white">Confirm Password *</Label>
                   <div className="relative">
                     <Input
                       id="confirmPassword"
@@ -296,7 +334,7 @@ const RestaurantRegisterPage: React.FC = () => {
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
                       required
-                      className="h-12 pr-12"
+                      className="h-12 pr-12 bg-black border-orange-500 text-white focus:border-orange-400 focus:ring-orange-400"
                     />
                     <Button
                       type="button"
@@ -306,9 +344,9 @@ const RestaurantRegisterPage: React.FC = () => {
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     >
                       {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
+                        <EyeOff className="h-4 w-4 text-orange-500" />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-4 w-4 text-orange-500" />
                       )}
                     </Button>
                   </div>
@@ -335,11 +373,11 @@ const RestaurantRegisterPage: React.FC = () => {
             </form>
 
             <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-300">
                 Already have a restaurant account?{' '}
                 <Link
                   to="/restaurant/login"
-                  className="text-orange-600 hover:text-orange-700 font-medium"
+                  className="text-orange-500 hover:text-orange-400 font-medium"
                 >
                   Sign in here
                 </Link>
@@ -347,10 +385,10 @@ const RestaurantRegisterPage: React.FC = () => {
             </div>
 
 
-            <div className="mt-6 p-4 bg-orange-50 rounded-lg">
-              <p className="text-xs text-orange-700 font-medium mb-2">Registration Info:</p>
-              <p className="text-xs text-orange-600">• Your account will be reviewed before activation</p>
-              <p className="text-xs text-orange-600">• You'll receive an email confirmation</p>
+            <div className="mt-6 p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+              <p className="text-xs text-orange-400 font-medium mb-2">Registration Info:</p>
+              <p className="text-xs text-orange-300">• Your account will be reviewed before activation</p>
+              <p className="text-xs text-orange-300">• You'll receive an email confirmation</p>
             </div>
           </CardContent>
         </Card>
@@ -358,7 +396,7 @@ const RestaurantRegisterPage: React.FC = () => {
         <div className="mt-6 text-center">
           <Link
             to="/"
-            className="text-sm text-muted-foreground hover:text-orange-600 transition-colors"
+            className="text-sm text-gray-400 hover:text-orange-500 transition-colors"
           >
             ← Back to Customer App
           </Link>

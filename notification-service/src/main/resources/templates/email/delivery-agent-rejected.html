@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Status Update</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 30px;
+        }
+        .status-message {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #dc2626;
+            font-weight: 600;
+        }
+        .reason-box {
+            background: #fef2f2;
+            border: 2px solid #fca5a5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .reason-box h3 {
+            margin: 0 0 15px 0;
+            color: #dc2626;
+            font-size: 16px;
+        }
+        .info-section {
+            background: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-section h3 {
+            margin: 0 0 10px 0;
+            color: #1e40af;
+        }
+        .footer {
+            background: #f8fafc;
+            padding: 20px;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+        }
+        .highlight {
+            color: #dc2626;
+            font-weight: 600;
+        }
+        .reapply-button {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: background-color 0.3s;
+        }
+        .reapply-button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Application Status Update</h1>
+            <p>Your delivery agent application status</p>
+        </div>
+        
+        <div class="content">
+            <div class="status-message">
+                Hello <span th:text="${agentName}">John Doe</span>,
+            </div>
+            
+            <p>Thank you for your interest in joining the GrubStack delivery team. After careful review of your application, we regret to inform you that we are unable to approve your application at this time.</p>
+            
+            <div class="reason-box">
+                <h3>📝 Reason for Rejection</h3>
+                <p th:text="${reason}">Application did not meet current requirements</p>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="http://localhost:5173/delivery/register" class="reapply-button">Apply Again</a>
+            </div>
+            
+            <div class="info-section">
+                <h3>🔄 What You Can Do</h3>
+                <ul>
+                    <li><strong>Review your application</strong> and ensure all information is accurate</li>
+                    <li><strong>Update your profile</strong> with any additional relevant experience</li>
+                    <li><strong>Reapply in the future</strong> when you meet our current requirements</li>
+                    <li><strong>Contact our support team</strong> if you have questions about the decision</li>
+                </ul>
+            </div>
+            
+            <div class="info-section">
+                <h3>💡 Tips for Future Applications</h3>
+                <ul>
+                    <li>Ensure all required fields are filled out completely</li>
+                    <li>Provide accurate and up-to-date contact information</li>
+                    <li>Include any relevant delivery or customer service experience</li>
+                    <li>Make sure your vehicle information is current and valid</li>
+                </ul>
+            </div>
+            
+            <p>We appreciate your interest in GrubStack and encourage you to apply again in the future when you feel you meet our requirements.</p>
+            
+            <p>If you have any questions about this decision or would like feedback on your application, please don't hesitate to contact our support team.</p>
+            
+            <p>Thank you for your understanding.</p>
+            
+            <p><strong>The GrubStack Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>This email was sent to <span th:text="${agentEmail}">agent@example.com</span></p>
+            <p>© 2024 GrubStack. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

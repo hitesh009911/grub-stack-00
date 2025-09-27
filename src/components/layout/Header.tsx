@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Menu, MapPin, LogOut, User } from 'lucide-react';
+import { Menu, MapPin, LogOut, User, Settings, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -58,25 +58,8 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center justify-between h-16">
           {/* Left Section */}
           <div className="flex items-center space-x-3">
-            {showMenuButton && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={onMenuClick}
-                className="p-2"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            )}
-            
             <div>
               <h1 className="text-lg font-bold text-foreground">{title}</h1>
-              {user?.role === 'customer' && (
-                <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  <span>Current Location</span>
-                </div>
-              )}
             </div>
           </div>
 
@@ -114,9 +97,9 @@ const Header: React.FC<HeaderProps> = ({
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive">

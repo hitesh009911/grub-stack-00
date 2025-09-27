@@ -124,4 +124,37 @@ public class NotificationService {
         }
         return CompletableFuture.completedFuture(null);
     }
+
+    @Async
+    public CompletableFuture<Void> sendOrderCancelledNotification(Long orderId, Long userId, String customerEmail, String restaurantName) {
+        try {
+            Map<String, Object> templateData = new HashMap<>();
+            templateData.put("orderId", orderId);
+            templateData.put("customerName", "Customer");
+            templateData.put("restaurantName", restaurantName);
+            templateData.put("cancellationTime", java.time.LocalDateTime.now().toString());
+
+            Map<String, Object> notification = new HashMap<>();
+            notification.put("type", "DELIVERY_CANCELLED");
+            notification.put("channel", "EMAIL");
+            notification.put("recipient", customerEmail);
+            notification.put("subject", "Order Cancelled - Order #" + orderId);
+            notification.put("message", "Your order #" + orderId + " has been cancelled. If you have any questions, please contact " + restaurantName + ".");
+            notification.put("notificationId", "order-cancelled-" + orderId + "-" + UUID.randomUUID().toString());
+            notification.put("templateId", "order-cancelled");
+            notification.put("templateData", templateData);
+            notification.put("priority", "NORMAL");
+
+            restTemplate.postForObject(
+                "http://localhost:8089/notifications/send",
+                notification,
+                Object.class
+            );
+            
+            logger.info("Order cancelled notification sent for order: {}", orderId);
+        } catch (Exception e) {
+            logger.error("Failed to send order cancelled notification for order: {}", orderId, e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
 }

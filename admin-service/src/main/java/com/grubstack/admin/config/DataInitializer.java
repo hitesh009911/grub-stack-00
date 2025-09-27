@@ -24,7 +24,7 @@ public class DataInitializer implements CommandLineRunner {
             defaultAdmin.setEmail("admin@grubstack.com");
             defaultAdmin.setPasswordHash(hashPassword("admin123"));
             defaultAdmin.setFullName("System Administrator");
-            defaultAdmin.setRole(AdminUser.Role.SUPER_ADMIN);
+            defaultAdmin.setRole(AdminUser.Role.ADMIN);
             defaultAdmin.setPermissions(Set.of(
                 AdminUser.Permission.MANAGE_RESTAURANTS,
                 AdminUser.Permission.MANAGE_ADMINS,

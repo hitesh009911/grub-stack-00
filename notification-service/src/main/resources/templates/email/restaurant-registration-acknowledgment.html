@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Received - GrubStack Restaurant</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            margin: 0;
+        }
+        .content {
+            padding: 30px;
+        }
+        .status-message {
+            background-color: #e8f5e8;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .restaurant-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .value {
+            color: #6c757d;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+        .highlight {
+            color: #ff6b35;
+            font-weight: bold;
+        }
+        .next-steps {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">GrubStack</div>
+            <h1 class="title">Registration Received</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear <span class="highlight" th:text="${ownerName}">Restaurant Owner</span>,</p>
+            
+            <div class="status-message">
+                <h3>🎉 Thank You for Registering!</h3>
+                <p>We have successfully received your restaurant registration application. Our team will review your information and get back to you soon.</p>
+            </div>
+            
+            <div class="restaurant-info">
+                <h4>Restaurant Details:</h4>
+                <div class="info-item">
+                    <span class="label">Restaurant Name:</span>
+                    <span class="value" th:text="${restaurantName}">Restaurant Name</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Owner Name:</span>
+                    <span class="value" th:text="${ownerName}">Owner Name</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Email:</span>
+                    <span class="value" th:text="${email}">restaurant@example.com</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Phone:</span>
+                    <span class="value" th:text="${phone}">+1 (555) 123-4567</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Address:</span>
+                    <span class="value" th:text="${address}">Restaurant Address</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Status:</span>
+                    <span class="value" style="color: #ffc107; font-weight: bold;">PENDING REVIEW</span>
+                </div>
+            </div>
+            
+            <div class="next-steps">
+                <h4>📋 What Happens Next?</h4>
+                <ul>
+                    <li>Our team will review your restaurant information</li>
+                    <li>We may contact you for additional details if needed</li>
+                    <li>You'll receive an approval notification once reviewed</li>
+                    <li>Upon approval, you can start managing your restaurant on GrubStack</li>
+                </ul>
+            </div>
+            
+            <h3>Why Choose GrubStack?</h3>
+            <ul>
+                <li>Reach thousands of hungry customers in your area</li>
+                <li>Easy-to-use restaurant management dashboard</li>
+                <li>Real-time order tracking and notifications</li>
+                <li>Secure payment processing</li>
+                <li>24/7 customer support</li>
+            </ul>
+            
+            <p>If you have any questions about your registration or need to update any information, please contact our support team.</p>
+            
+            <p>Thank you for choosing GrubStack!</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>GrubStack Restaurant Team</strong></p>
+            <p>Email: restaurants@grubstack.com | Phone: 1-800-GRUBSTACK</p>
+            <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> GrubStack. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

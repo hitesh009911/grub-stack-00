@@ -176,14 +176,6 @@ const AdminLoginPage: React.FC = () => {
               </Button>
             </div>
 
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-muted rounded-lg">
-              <h4 className="text-sm font-semibold text-foreground mb-2">Demo Credentials:</h4>
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p><strong>Email:</strong> admin@grubstack.com</p>
-                <p><strong>Password:</strong> admin123</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </motion.div>

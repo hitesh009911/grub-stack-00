@@ -27,7 +27,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, onTabCha
       case 'customer':
         return [
           { id: 'home', icon: Home, label: 'Home' },
-          { id: 'restaurants', icon: Search, label: 'Browse' },
+          { id: 'browse', icon: Search, label: 'Browse' },
           { id: 'cart', icon: ShoppingCart, label: 'Cart', badge: totalItems },
           { id: 'orders', icon: MapPin, label: 'Orders' },
           { id: 'profile', icon: User, label: 'Profile' },
@@ -71,7 +71,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, onTabCha
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
     >
-      <div className="flex justify-around items-center py-2 px-1">
+      <div className="flex justify-around items-center py-1 px-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -80,7 +80,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, onTabCha
             <motion.button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`relative flex flex-col items-center p-2 rounded-lg transition-colors ${
+              className={`relative flex flex-col items-center p-1 rounded-lg transition-colors ${
                 isActive 
                   ? 'text-primary bg-primary/10' 
                   : 'text-muted-foreground hover:text-foreground'
@@ -88,26 +88,17 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, onTabCha
               whileTap={{ scale: 0.95 }}
             >
               <div className="relative">
-                <Icon className="h-5 w-5" />
+                <Icon className="h-4 w-4" />
                 {tab.badge && tab.badge > 0 && (
                   <Badge 
                     variant="destructive" 
-                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                    className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 flex items-center justify-center text-xs"
                   >
                     {tab.badge > 99 ? '99+' : tab.badge}
                   </Badge>
                 )}
               </div>
-              <span className="text-xs mt-1 font-medium">{tab.label}</span>
-              
-              {isActive && (
-                <motion.div
-                  className="absolute -bottom-1 left-1/2 w-1 h-1 bg-primary rounded-full"
-                  layoutId="activeIndicator"
-                  initial={false}
-                  style={{ x: "-50%" }}
-                />
-              )}
+              <span className="text-xs mt-0.5 font-medium">{tab.label}</span>
             </motion.button>
           );
         })}

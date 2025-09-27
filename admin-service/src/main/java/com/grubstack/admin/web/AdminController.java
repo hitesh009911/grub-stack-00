@@ -51,12 +51,11 @@ public class AdminController {
                 request.permissions()
         );
         
-        // Send admin creation notification asynchronously
-        notificationService.sendAdminCreationNotification(
+        // Send admin welcome notification asynchronously
+        notificationService.sendAdminWelcomeNotification(
             admin.getEmail(),
             admin.getFullName(),
-            request.password(), // Send the plain password for the email
-            admin.getRole().name()
+            request.password() // Send the plain password for the email
         );
         
         return AdminUserDto.fromEntity(admin);
@@ -64,24 +63,90 @@ public class AdminController {
 
     @PutMapping("/users/{id}")
     public AdminUserDto updateAdmin(@PathVariable Long id, @RequestBody @Valid UpdateAdminRequest request) {
+        // Get admin details before update for comparison
+        AdminUser adminBefore = adminUserRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Admin not found with id: " + id));
+        
         AdminUser admin = adminService.updateAdmin(
                 id,
                 request.fullName(),
                 request.role() != null ? AdminUser.Role.valueOf(request.role()) : null,
                 request.permissions()
         );
+        
+        // Track changes for notification
+        Map<String, Object> changes = new HashMap<>();
+        
+        if (!adminBefore.getFullName().equals(admin.getFullName())) {
+            changes.put("fullName", Map.of("old", adminBefore.getFullName(), "new", admin.getFullName()));
+        }
+        
+        if (!adminBefore.getRole().equals(admin.getRole())) {
+            changes.put("role", Map.of("old", adminBefore.getRole().name(), "new", admin.getRole().name()));
+        }
+        
+        if (!adminBefore.getPermissions().equals(admin.getPermissions())) {
+            changes.put("permissions", Map.of(
+                "old", adminBefore.getPermissions().toString(), 
+                "new", admin.getPermissions().toString()
+            ));
+        }
+        
+        // Send profile update notification if there are changes
+        if (!changes.isEmpty()) {
+            notificationService.sendAdminProfileUpdatedNotification(
+                admin.getEmail(),
+                admin.getFullName(),
+                changes
+            );
+        }
+        
         return AdminUserDto.fromEntity(admin);
     }
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<Void> deleteAdmin(@PathVariable Long id) {
+        // Get admin details before deletion for notification
+        AdminUser admin = adminUserRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Admin not found with id: " + id));
+        
+        // Send deletion notification
+        notificationService.sendAdminAccountDeletedNotification(
+            admin.getEmail(),
+            admin.getFullName(),
+            "Account deleted by system administrator"
+        );
+        
         adminService.deleteAdmin(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/users/{id}/toggle-active")
     public AdminUserDto toggleActive(@PathVariable Long id) {
+        // Get admin details before toggling for notification
+        AdminUser adminBefore = adminUserRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Admin not found with id: " + id));
+        
+        boolean wasActive = adminBefore.isActive();
+        
         AdminUser admin = adminService.toggleActive(id);
+        
+        // Send appropriate notification based on the new status
+        if (wasActive && !admin.isActive()) {
+            // Admin was deactivated
+            notificationService.sendAdminAccountDeactivatedNotification(
+                admin.getEmail(),
+                admin.getFullName(),
+                "Account deactivated by system administrator"
+            );
+        } else if (!wasActive && admin.isActive()) {
+            // Admin was reactivated
+            notificationService.sendAdminAccountReactivatedNotification(
+                admin.getEmail(),
+                admin.getFullName()
+            );
+        }
+        
         return AdminUserDto.fromEntity(admin);
     }
 

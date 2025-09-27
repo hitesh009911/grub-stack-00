@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { api } from '@/lib/api';
+import BigTruckLoader from '@/components/ui/BigTruckLoader';
 import italianImg from '@/assets/restaurant-italian.jpg';
 import sushiImg from '@/assets/restaurant-sushi.jpg';
 import indianImg from '@/assets/restaurant-indian.jpg';
@@ -23,8 +24,6 @@ interface Restaurant {
   rating: number;
   deliveryTime: string;
   deliveryFee: number;
-  promoted?: boolean;
-  discount?: string;
 }
 
 const HomePage: React.FC = () => {
@@ -47,9 +46,7 @@ const HomePage: React.FC = () => {
           image: getRestaurantImage(restaurant.cuisine),
           rating: 4.5 + Math.random() * 0.5, // Mock rating
           deliveryTime: `${20 + Math.floor(Math.random() * 20)}-${30 + Math.floor(Math.random() * 20)} min`,
-          deliveryFee: 1.99 + Math.random() * 3,
-          promoted: Math.random() > 0.7,
-          discount: Math.random() > 0.8 ? `${Math.floor(Math.random() * 20) + 10}% OFF` : undefined
+          deliveryFee: 1.99 + Math.random() * 3
         }));
         
         setRestaurants(transformedRestaurants);
@@ -75,14 +72,6 @@ const HomePage: React.FC = () => {
     return italianImg; // default
   };
 
-  const categories = [
-    { name: 'Pizza', icon: '🍕', color: 'bg-red-100 text-red-700' },
-    { name: 'Burgers', icon: '🍔', color: 'bg-yellow-100 text-yellow-700' },
-    { name: 'Sushi', icon: '🍣', color: 'bg-blue-100 text-blue-700' },
-    { name: 'Indian', icon: '🍛', color: 'bg-orange-100 text-orange-700' },
-    { name: 'Chinese', icon: '🥢', color: 'bg-green-100 text-green-700' },
-    { name: 'Mexican', icon: '🌮', color: 'bg-purple-100 text-purple-700' }
-  ];
 
   const filteredRestaurants = restaurants.filter(restaurant =>
     restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -91,11 +80,8 @@ const HomePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading restaurants...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <BigTruckLoader />
       </div>
     );
   }
@@ -112,7 +98,7 @@ const HomePage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-24">
       {/* Hero Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -138,27 +124,6 @@ const HomePage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Categories */}
-      <div className="px-4">
-        <h3 className="text-lg font-semibold mb-3">Categories</h3>
-        <div className="grid grid-cols-3 gap-3">
-          {categories.map((category, index) => (
-            <motion.div
-              key={category.name}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl mb-2">{category.icon}</div>
-                  <span className="text-sm font-medium">{category.name}</span>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </div>
 
       {/* Restaurants */}
       <div className="px-4">
@@ -190,16 +155,6 @@ const HomePage: React.FC = () => {
                       alt={restaurant.name}
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
-                    {restaurant.promoted && (
-                      <Badge className="absolute top-2 left-2 bg-accent text-accent-foreground">
-                        Promoted
-                      </Badge>
-                    )}
-                    {restaurant.discount && (
-                      <Badge className="absolute top-2 right-2 bg-success text-success-foreground">
-                        {restaurant.discount}
-                      </Badge>
-                    )}
                   </div>
                   
                   <div className="p-4">
@@ -234,69 +189,6 @@ const HomePage: React.FC = () => {
           ))}
         </div>
 
-        {/* Delivery Agent Section */}
-        <div className="py-16 bg-gradient-to-r from-green-50 to-blue-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Join Our Delivery Team
-              </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Become a delivery agent and start earning with GrubStack. 
-                Flexible hours, competitive pay, and be your own boss.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Card className="h-full">
-                  <CardContent className="p-8 text-center">
-                    <Truck className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-4">New to Delivery?</h3>
-                    <p className="text-gray-600 mb-6">
-                      Apply to become a delivery agent. We'll review your application 
-                      and get back to you within 2-3 business days.
-                    </p>
-                    <Button 
-                      onClick={() => navigate('/delivery/register')}
-                      className="w-full"
-                    >
-                      Apply Now
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Card className="h-full">
-                  <CardContent className="p-8 text-center">
-                    <Truck className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-4">Already an Agent?</h3>
-                    <p className="text-gray-600 mb-6">
-                      Sign in to your delivery dashboard to view assigned orders, 
-                      update delivery status, and manage your deliveries.
-                    </p>
-                    <Button 
-                      onClick={() => navigate('/delivery/login')}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      Agent Login
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

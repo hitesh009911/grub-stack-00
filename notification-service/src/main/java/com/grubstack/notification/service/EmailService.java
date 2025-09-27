@@ -84,7 +84,59 @@ public class EmailService {
             context.setVariable("notificationType", notification.getType());
             context.setVariable("priority", notification.getPriority());
             
-            String templateName = "email/" + notification.getTemplateId() + ".html";
+            // Determine template name based on notification type
+            String templateName;
+            switch (notification.getType()) {
+                case ADMIN_CREATION:
+                    templateName = "email/admin-creation.html";
+                    break;
+                case DELIVERY_AGENT_CREATION:
+                    templateName = "email/delivery-agent-creation.html";
+                    break;
+                case DELIVERY_AGENT_REGISTRATION:
+                    templateName = "email/delivery-agent-registration.html";
+                    break;
+                case DELIVERY_AGENT_APPROVED:
+                    templateName = "email/delivery-agent-approved.html";
+                    break;
+                case DELIVERY_AGENT_REJECTED:
+                    templateName = "email/delivery-agent-rejected.html";
+                    break;
+                case DELIVERY_AGENT_DELETED:
+                    templateName = "email/delivery-agent-deleted.html";
+                    break;
+                case ADMIN_WELCOME:
+                    templateName = "email/admin-welcome.html";
+                    break;
+                case ADMIN_ACCOUNT_DEACTIVATED:
+                    templateName = "email/admin-account-deactivated.html";
+                    break;
+                case ADMIN_ACCOUNT_REACTIVATED:
+                    templateName = "email/admin-account-reactivated.html";
+                    break;
+                case ADMIN_ACCOUNT_DELETED:
+                    templateName = "email/admin-account-deleted.html";
+                    break;
+            case ADMIN_PROFILE_UPDATED:
+                templateName = "email/admin-profile-updated.html";
+                break;
+            case RESTAURANT_REGISTRATION_ACKNOWLEDGMENT:
+                templateName = "email/restaurant-registration-acknowledgment.html";
+                break;
+            case RESTAURANT_APPROVED:
+                templateName = "email/restaurant-approved.html";
+                break;
+            case RESTAURANT_DELETED:
+                templateName = "email/restaurant-deleted.html";
+                break;
+            case WELCOME_EMAIL:
+                templateName = "email/welcome-email.html";
+                break;
+                default:
+                    templateName = "email/" + notification.getTemplateId() + ".html";
+                    break;
+            }
+            
             return templateEngine.process(templateName, context);
             
         } catch (Exception e) {

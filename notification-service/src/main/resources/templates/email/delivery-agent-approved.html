@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to GrubStack Delivery Team!</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 30px;
+        }
+        .welcome-message {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #059669;
+            font-weight: 600;
+        }
+        .credentials-box {
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .credentials-box h3 {
+            margin: 0 0 15px 0;
+            color: #0369a1;
+            font-size: 16px;
+        }
+        .credential-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0f2fe;
+        }
+        .credential-item:last-child {
+            border-bottom: none;
+        }
+        .credential-label {
+            font-weight: 600;
+            color: #0369a1;
+        }
+        .credential-value {
+            font-family: 'Courier New', monospace;
+            background: #e0f2fe;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .login-button {
+            display: inline-block;
+            background: #f97316;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: background-color 0.3s;
+        }
+        .login-button:hover {
+            background: #ea580c;
+        }
+        .info-section {
+            background: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-section h3 {
+            margin: 0 0 10px 0;
+            color: #1e40af;
+        }
+        .footer {
+            background: #f8fafc;
+            padding: 20px;
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+        }
+        .highlight {
+            color: #f97316;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Welcome to GrubStack!</h1>
+            <p>Your delivery agent application has been approved!</p>
+        </div>
+        
+        <div class="content">
+            <div class="welcome-message">
+                Congratulations, <span th:text="${agentName}">John Doe</span>! 
+                We're excited to have you join our delivery team.
+            </div>
+            
+            <p>We're thrilled to inform you that your application to become a delivery agent with GrubStack has been <strong class="highlight">approved</strong>! You can now start delivering orders and earning money.</p>
+            
+            <div class="credentials-box">
+                <h3>🔑 Your Login Credentials</h3>
+                <div class="credential-item">
+                    <span class="credential-label">Email:</span>
+                    <span class="credential-value" th:text="${agentEmail}">agent@example.com</span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">Password:</span>
+                    <span class="credential-value" th:text="${loginPassword}">delivery123</span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">Login URL:</span>
+                    <span class="credential-value" th:text="${loginUrl}">http://localhost:5173/delivery/login</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a th:href="${loginUrl}" class="login-button">Login to Dashboard</a>
+            </div>
+            
+            <div class="info-section">
+                <h3>📱 What's Next?</h3>
+                <ul>
+                    <li><strong>Login to your dashboard</strong> using the credentials above</li>
+                    <li><strong>Update your profile</strong> and add any additional information</li>
+                    <li><strong>Change your password</strong> for security (recommended)</li>
+                    <li><strong>Start accepting deliveries</strong> and begin earning!</li>
+                </ul>
+            </div>
+            
+            <div class="info-section">
+                <h3>💡 Important Notes</h3>
+                <ul>
+                    <li>Keep your login credentials safe and secure</li>
+                    <li>You can change your password anytime from your dashboard</li>
+                    <li>Make sure to keep your profile information up to date</li>
+                    <li>Check your dashboard regularly for new delivery opportunities</li>
+                </ul>
+            </div>
+            
+            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+            
+            <p>Welcome aboard, and happy delivering! 🚚</p>
+            
+            <p><strong>The GrubStack Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>This email was sent to <span th:text="${agentEmail}">agent@example.com</span></p>
+            <p>© 2024 GrubStack. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

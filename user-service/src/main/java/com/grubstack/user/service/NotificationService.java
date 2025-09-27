@@ -29,10 +29,11 @@ public class NotificationService {
         System.out.println("User Name: " + userName);
         
         try {
+            // Create notification data
             Map<String, Object> templateData = new HashMap<>();
             templateData.put("userName", userName);
             templateData.put("userEmail", userEmail);
-            templateData.put("registrationDate", java.time.LocalDateTime.now());
+            templateData.put("registrationDate", java.time.LocalDateTime.now().toString());
 
             Map<String, Object> notification = new HashMap<>();
             notification.put("type", "WELCOME_EMAIL");
@@ -49,9 +50,19 @@ public class NotificationService {
             System.out.println("Sending notification to: http://localhost:8089/notifications/send");
             System.out.println("Notification data: " + notification);
             
-            Object response = restTemplate.postForObject("http://localhost:8089/notifications/send", notification, Object.class);
-            System.out.println("Response received: " + response);
-            System.out.println("Welcome email sent successfully for user: " + userId);
+            // Send welcome email using the new endpoint (similar to order confirmation)
+            try {
+                String url = "http://localhost:8089/notifications/welcome-email?email=" + 
+                           userEmail + 
+                           "&userName=" + java.net.URLEncoder.encode(userName, "UTF-8");
+                
+                String response = restTemplate.postForObject(url, null, String.class);
+                System.out.println("Welcome email sent successfully for user: " + userId);
+                System.out.println("Response: " + response);
+            } catch (Exception e) {
+                System.err.println("Error sending welcome email: " + e.getMessage());
+                e.printStackTrace();
+            }
         } catch (Exception e) {
             System.err.println("Failed to send welcome email for user " + userId + ": " + e.getMessage());
             e.printStackTrace();

@@ -61,7 +61,10 @@ const OrderManagementPage: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const restaurantId = 1; // Demo restaurant ID
+  // Get restaurant ID from localStorage (from restaurant login)
+  const restaurantAuth = localStorage.getItem('restaurantAuth');
+  const restaurant = restaurantAuth ? JSON.parse(restaurantAuth) : null;
+  const restaurantId = restaurant?.id || 6; // Fallback to 6 for demo
 
   // Fetch data
   const fetchData = async () => {
@@ -71,12 +74,13 @@ const OrderManagementPage: React.FC = () => {
       const menuItemsData = menuResponse.data || [];
       setMenuItems(menuItemsData);
       
-      // Fetch orders
+      // Fetch orders for this specific restaurant
       let restaurantOrders = [];
       try {
-        const ordersResponse = await api.get('/orders');
-        const allOrders = ordersResponse.data || [];
-        restaurantOrders = allOrders.filter((order: Order) => order.restaurantId === restaurantId);
+        console.log(`[${new Date().toLocaleTimeString()}] Fetching orders for restaurant ${restaurantId} using endpoint: /orders/restaurant/${restaurantId}`);
+        const ordersResponse = await api.get(`/orders/restaurant/${restaurantId}`);
+        restaurantOrders = ordersResponse.data || [];
+        console.log(`[${new Date().toLocaleTimeString()}] Successfully fetched ${restaurantOrders.length} orders for restaurant ${restaurantId}:`, restaurantOrders);
       } catch (error) {
         console.log('Failed to fetch orders, using mock data:', error);
         // Use mock data when API is not available
@@ -162,6 +166,20 @@ const OrderManagementPage: React.FC = () => {
         }));
       }
       
+      // Check for status changes (delivered orders moving to past deliveries)
+      const previousOrders = orders;
+      const newlyDelivered = restaurantOrders.filter(order => 
+        order.status === 'DELIVERED' && 
+        !previousOrders.some(prev => prev.id === order.id && prev.status === 'DELIVERED')
+      );
+      
+      if (newlyDelivered.length > 0) {
+        toast({
+          title: "Orders Delivered! 🎉",
+          description: `${newlyDelivered.length} order(s) have been delivered and moved to Past Deliveries`,
+        });
+      }
+
       setOrders(restaurantOrders);
       setDeliveries(restaurantDeliveries);
     } catch (error) {
@@ -180,8 +198,8 @@ const OrderManagementPage: React.FC = () => {
   useEffect(() => {
     fetchData();
     
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchData, 30000);
+    // Auto-refresh every 10 seconds to catch status updates quickly
+    const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -197,8 +215,8 @@ const OrderManagementPage: React.FC = () => {
 
   // Get order status
   const getOrderStatus = (order: Order) => {
-    const delivery = deliveries.find(d => d.orderId === order.id);
-    return delivery ? delivery.status : 'PENDING';
+    // Use the order's own status, not delivery status
+    return order.status;
   };
 
   // Handle order status update
@@ -296,6 +314,17 @@ const OrderManagementPage: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // Separate orders into recent (not delivered) and past deliveries (delivered)
+  console.log('=== ORDER FILTERING DEBUG ===');
+  console.log('All orders:', orders.map(o => ({ id: o.id, status: o.status })));
+  console.log('Filtered orders:', filteredOrders.map(o => ({ id: o.id, status: o.status })));
+  
+  const recentOrders = filteredOrders.filter(order => !['DELIVERED', 'CANCELLED'].includes(order.status));
+  const pastDeliveries = filteredOrders.filter(order => ['DELIVERED', 'CANCELLED'].includes(order.status));
+  
+  console.log('Recent orders (should NOT include DELIVERED):', recentOrders.map(o => ({ id: o.id, status: o.status })));
+  console.log('Past deliveries (should ONLY include DELIVERED/CANCELLED):', pastDeliveries.map(o => ({ id: o.id, status: o.status })));
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -322,7 +351,10 @@ const OrderManagementPage: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">Order Management</h1>
-                <p className="text-sm text-muted-foreground">Manage restaurant orders</p>
+                <p className="text-sm text-muted-foreground">
+                  Manage restaurant orders
+                  {refreshing && <span className="ml-2 text-orange-500">• Refreshing...</span>}
+                </p>
               </div>
             </div>
             
@@ -361,8 +393,10 @@ const OrderManagementPage: React.FC = () => {
                 size="sm" 
                 onClick={handleRefresh}
                 disabled={refreshing}
+                className="flex items-center space-x-2"
               >
                 <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
               </Button>
             </div>
           </div>
@@ -450,9 +484,16 @@ const OrderManagementPage: React.FC = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            <AnimatePresence>
-              {filteredOrders.map((order, index) => (
+          <div className="space-y-6">
+            {/* Recent Orders Section */}
+            {recentOrders.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <h2 className="text-xl font-semibold">Recent Orders</h2>
+                  <Badge variant="secondary">{recentOrders.length}</Badge>
+                </div>
+                <AnimatePresence>
+                  {recentOrders.map((order, index) => (
                 <motion.div
                   key={order.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -541,6 +582,73 @@ const OrderManagementPage: React.FC = () => {
                 </motion.div>
               ))}
             </AnimatePresence>
+              </div>
+            )}
+
+            {/* Past Deliveries Section */}
+            {pastDeliveries.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <h2 className="text-xl font-semibold">Past Deliveries</h2>
+                  <Badge variant="outline">{pastDeliveries.length}</Badge>
+                </div>
+                <AnimatePresence>
+                  {pastDeliveries.map((order, index) => (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                              <Package className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-foreground">Order #{order.id}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                Customer ID: {order.userId} • {formatTimeAgo(order.createdAt)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-4">
+                          <div className="text-right">
+                            <p className="font-semibold text-foreground">₹{((order.totalCents || 0) / 100).toFixed(2)}</p>
+                            <div className="mt-1">
+                              {getStatusBadge(getOrderStatus(order))}
+                            </div>
+                          </div>
+                          
+                          <div className="text-center text-sm text-muted-foreground">
+                            <p>{order.status === 'DELIVERED' ? 'Order completed' : 'Order cancelled'}</p>
+                          </div>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setShowOrderDetails(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+              </div>
+            )}
           </div>
         )}
       </div>

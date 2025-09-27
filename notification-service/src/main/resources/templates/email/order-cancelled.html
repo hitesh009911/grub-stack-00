@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Cancelled - GrubStack</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 30px;
+        }
+        .order-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .order-info h3 {
+            color: #ff6b6b;
+            margin-top: 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #666;
+        }
+        .info-value {
+            color: #333;
+        }
+        .status-badge {
+            display: inline-block;
+            background-color: #dc3545;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .message {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .restaurant-info {
+            background-color: #e3f2fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .restaurant-info h4 {
+            color: #1976d2;
+            margin-top: 0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        .footer a {
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #ff6b6b;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .cta-button:hover {
+            background-color: #e55a5a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ GrubStack</h1>
+            <p>Order Cancelled</p>
+        </div>
+        
+        <div class="content">
+            <h2>Order Cancellation Confirmation</h2>
+            
+            <div class="message">
+                <p><strong>We're sorry to inform you that your order has been cancelled.</strong></p>
+                <p th:text="${message}">Your order #12345 has been cancelled. If you have any questions, please contact the restaurant.</p>
+            </div>
+            
+            <div class="order-info">
+                <h3>Order Details</h3>
+                <div class="info-row">
+                    <span class="info-label">Order ID:</span>
+                    <span class="info-value" th:text="'#' + ${orderId}">#12345</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Customer Name:</span>
+                    <span class="info-value" th:text="${customerName}">Customer Name</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Cancellation Time:</span>
+                    <span class="info-value" th:text="${cancellationTime}">2025-01-01 12:30:00</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        <span class="status-badge">Cancelled</span>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="restaurant-info">
+                <h4>🍴 Restaurant Information</h4>
+                <div class="info-row">
+                    <span class="info-label">Restaurant Name:</span>
+                    <span class="info-value" th:text="${restaurantName}">Restaurant Name</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Contact:</span>
+                    <span class="info-value">Please contact the restaurant directly for any questions about this cancellation</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="http://localhost:5173" class="cta-button">Order Again</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Thank you for choosing GrubStack! 🚀</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>&copy; 2025 GrubStack. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

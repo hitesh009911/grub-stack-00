@@ -12,19 +12,20 @@ import {
   Edit,
   Trash2,
   LogOut,
-  Settings,
   Bell,
   Search,
   RefreshCw,
   X,
   CheckCircle,
   AlertCircle,
-  Info
+  Info,
+  HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -277,6 +278,69 @@ const RestaurantDashboardPage: React.FC = () => {
       
       setNotifications(prev => [...newNotifications, ...prev.slice(0, 10)]);
       
+      // Fetch real notifications from notification service for this restaurant
+      // Only if notifications haven't been cleared
+      const clearedTime = localStorage.getItem('restaurant-notifications-cleared');
+      if (!clearedTime) {
+        try {
+          const notificationsResponse = await api.get('/notifications/status/SENT');
+          const realNotifications = notificationsResponse.data || [];
+          
+          // Get restaurant order IDs to filter notifications
+          const restaurantOrderIds = restaurantOrders.map((order: any) => order.id);
+          
+          // Convert notification service data to our notification format
+          // Only show notifications that are related to this restaurant's orders
+          const convertedNotifications = realNotifications
+            .filter((notif: any) => {
+              // Filter by notification type
+              if (notif.type !== 'ORDER_CONFIRMATION' && notif.type !== 'DELIVERY_DELIVERED') {
+                return false;
+              }
+              
+              // Extract order ID from notification content if possible
+              const orderIdMatch = notif.subject?.match(/Order #(\d+)/) || notif.message?.match(/Order #(\d+)/);
+              if (orderIdMatch) {
+                const orderId = parseInt(orderIdMatch[1]);
+                return restaurantOrderIds.includes(orderId);
+              }
+              
+              // If we can't extract order ID, include it anyway (fallback)
+              return true;
+            })
+            .slice(0, 10) // Limit to 10 most recent
+            .map((notif: any, index: number) => ({
+              id: `real-${notif.id}-${index}-${Date.now()}`, // Ensure unique keys
+              type: notif.type === 'ORDER_CONFIRMATION' ? 'order' : 'delivery',
+              title: notif.type === 'ORDER_CONFIRMATION' ? 'Order Confirmed' : 'Order Delivered',
+              message: notif.subject || notif.message || 'Notification from system',
+              timestamp: new Date(notif.createdAt || notif.timestamp || new Date()),
+              read: false,
+              actionUrl: notif.type === 'ORDER_CONFIRMATION' ? '/restaurant/orders' : '/restaurant/orders'
+            }));
+          
+          // Remove duplicates and combine with order-based notifications
+          const uniqueConvertedNotifications = convertedNotifications.filter((notif, index, self) => 
+            index === self.findIndex(n => n.message === notif.message && n.timestamp.getTime() === notif.timestamp.getTime())
+          );
+          
+          setNotifications(prev => {
+            // Combine all notifications and remove duplicates
+            const allNotifications = [...uniqueConvertedNotifications, ...newNotifications, ...prev];
+            const uniqueAll = allNotifications.filter((notif, index, self) => 
+              index === self.findIndex(n => n.id === notif.id)
+            );
+            return uniqueAll.slice(0, 15); // Limit to 15 total notifications
+          });
+        } catch (notifError) {
+          console.log('Failed to fetch real notifications, using order-based notifications only:', notifError);
+          // Keep the order-based notifications we already generated
+        }
+      } else {
+        // Notifications were cleared, only show new order-based notifications
+        setNotifications(newNotifications);
+      }
+      
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       // Use mock data if API fails
@@ -329,25 +393,8 @@ const RestaurantDashboardPage: React.FC = () => {
         { id: 6, name: 'French Fries', description: 'Crispy golden fries', priceCents: 8000 }
       ]);
       
-      // Mock notifications
-      setNotifications([
-        {
-          id: '1',
-          type: 'order',
-          title: 'New Order #14',
-          message: 'John Doe ordered Chicken Biryani & Dal Curry for ₹850',
-          timestamp: new Date(Date.now() - 2 * 60 * 1000),
-          read: false
-        },
-        {
-          id: '2',
-          type: 'delivery',
-          title: 'Order #13 Ready',
-          message: 'Jane Smith\'s pizza order is ready for pickup',
-          timestamp: new Date(Date.now() - 5 * 60 * 1000),
-          read: false
-        }
-      ]);
+      // No mock notifications - use real data only
+      setNotifications([]);
     }
   }, []);
 
@@ -398,13 +445,87 @@ const RestaurantDashboardPage: React.FC = () => {
       setLoading(false);
     });
     
+    // Fetch initial notifications
+    fetchNotifications();
+    
     // Set up auto-refresh every 30 seconds
     const interval = setInterval(() => {
       fetchDashboardData();
+      fetchNotifications(); // Also refresh notifications
     }, 30000);
     
     return () => clearInterval(interval);
   }, [navigate, fetchDashboardData]);
+
+  // Fetch notifications from notification service for this specific restaurant
+  const fetchNotifications = async () => {
+    try {
+      // Check if notifications were cleared - if so, don't fetch new ones
+      const clearedTime = localStorage.getItem('restaurant-notifications-cleared');
+      if (clearedTime) {
+        console.log('Notifications were cleared, not fetching new ones');
+        return;
+      }
+      
+      // Get restaurant ID from auth context
+      const restaurantAuth = localStorage.getItem('restaurantAuth');
+      const restaurant = restaurantAuth ? JSON.parse(restaurantAuth) : null;
+      const restaurantId = restaurant?.id || 5; // Fallback to 5 for demo
+      
+      const notificationsResponse = await api.get('/notifications/status/SENT');
+      const realNotifications = notificationsResponse.data || [];
+      
+      // Get orders for this restaurant to filter notifications
+      const ordersResponse = await api.get(`/orders/restaurant/${restaurantId}`);
+      const restaurantOrders = ordersResponse.data || [];
+      const restaurantOrderIds = restaurantOrders.map((order: any) => order.id);
+      
+      console.log(`[${new Date().toLocaleTimeString()}] Fetching notifications for restaurant ${restaurantId}`);
+      console.log(`Restaurant order IDs:`, restaurantOrderIds);
+      
+      // Convert notification service data to our notification format
+      // Only show notifications that are related to this restaurant's orders
+      const convertedNotifications = realNotifications
+        .filter((notif: any) => {
+          // Filter by notification type
+          if (notif.type !== 'ORDER_CONFIRMATION' && notif.type !== 'DELIVERY_DELIVERED') {
+            return false;
+          }
+          
+          // Extract order ID from notification content if possible
+          // This is a simple approach - in a real system, notifications would have orderId field
+          const orderIdMatch = notif.subject?.match(/Order #(\d+)/) || notif.message?.match(/Order #(\d+)/);
+          if (orderIdMatch) {
+            const orderId = parseInt(orderIdMatch[1]);
+            return restaurantOrderIds.includes(orderId);
+          }
+          
+          // If we can't extract order ID, include it anyway (fallback)
+          return true;
+        })
+        .slice(0, 15) // Limit to 15 most recent
+        .map((notif: any, index: number) => ({
+          id: `real-${notif.id}-${index}-${Date.now()}`, // Ensure unique keys
+          type: notif.type === 'ORDER_CONFIRMATION' ? 'order' : 'delivery',
+          title: notif.type === 'ORDER_CONFIRMATION' ? 'Order Confirmed' : 'Order Delivered',
+          message: notif.subject || notif.message || 'Notification from system',
+          timestamp: new Date(notif.createdAt || notif.timestamp || new Date()),
+          read: false,
+          actionUrl: notif.type === 'ORDER_CONFIRMATION' ? '/restaurant/orders' : '/restaurant/orders'
+        }));
+      
+      console.log(`Filtered notifications for restaurant ${restaurantId}:`, convertedNotifications.length);
+      
+      // Remove duplicates based on notification content and set unique notifications
+      const uniqueNotifications = convertedNotifications.filter((notif, index, self) => 
+        index === self.findIndex(n => n.message === notif.message && n.timestamp.getTime() === notif.timestamp.getTime())
+      );
+      
+      setNotifications(uniqueNotifications);
+    } catch (error) {
+      console.log('Failed to fetch real notifications:', error);
+    }
+  };
 
   // Notification functions
   const markNotificationAsRead = (notificationId: string) => {
@@ -418,7 +539,9 @@ const RestaurantDashboardPage: React.FC = () => {
   };
 
   const markAllNotificationsAsRead = () => {
-    setNotifications([]); // Clear all notifications
+    setNotifications([]); // Clear all notifications permanently
+    // Store cleared state to prevent notifications from reappearing
+    localStorage.setItem('restaurant-notifications-cleared', Date.now().toString());
   };
 
   const handleNotificationClick = (notification: Notification) => {
@@ -583,7 +706,7 @@ const RestaurantDashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="bg-background shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -658,15 +781,23 @@ const RestaurantDashboardPage: React.FC = () => {
                     >
                       <div className="p-4 border-b">
                         <div className="flex justify-between items-center">
-                          <h3 className="font-semibold">Notifications</h3>
+                          <div></div>
                           <div className="flex space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={fetchNotifications}
+                              className="text-xs"
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={markAllNotificationsAsRead}
                               className="text-xs"
                             >
-                              Mark all read
+                              Clear all
                             </Button>
                             <Button
                               variant="ghost"
@@ -728,10 +859,46 @@ const RestaurantDashboardPage: React.FC = () => {
                 </AnimatePresence>
               </div>
 
-              {/* Settings */}
-              <Button variant="ghost" size="sm">
-                <Settings className="h-4 w-4" />
-              </Button>
+
+              {/* Help */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <HelpCircle className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center">
+                      <HelpCircle className="h-5 w-5 mr-2 text-blue-600" />
+                      Need Help?
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                        Contact Admin
+                      </h4>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                        <strong>Email:</strong> admin@grubstack.com
+                      </p>
+                      <p className="text-sm text-blue-600 dark:text-blue-400">
+                        For account issues, approval status, or general questions
+                      </p>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      <p className="mb-2">Common issues:</p>
+                      <ul className="list-disc list-inside space-y-1 text-xs">
+                        <li>Order management problems</li>
+                        <li>Menu item updates</li>
+                        <li>Delivery status changes</li>
+                        <li>Account verification</li>
+                        <li>Technical support</li>
+                      </ul>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {/* Logout */}
               <Button variant="ghost" size="sm" onClick={handleLogout}>
@@ -756,6 +923,59 @@ const RestaurantDashboardPage: React.FC = () => {
             Here's what's happening with your restaurant today.
           </p>
         </motion.div>
+
+        {/* Restaurant Information */}
+        {restaurantData && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-8"
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ChefHat className="h-5 w-5" />
+                  Restaurant Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold text-foreground mb-2">{restaurantData.name}</h4>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      <strong>Owner:</strong> {restaurantData.ownerName}
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      <strong>Email:</strong> {restaurantData.email}
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      <strong>Phone:</strong> {restaurantData.phone}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      <strong>Address:</strong>
+                    </p>
+                    <p className="text-sm text-foreground bg-muted/50 p-3 rounded-md">
+                      {restaurantData.address}
+                    </p>
+                    {restaurantData.description && (
+                      <div className="mt-3">
+                        <p className="text-sm text-muted-foreground mb-1">
+                          <strong>Description:</strong>
+                        </p>
+                        <p className="text-sm text-foreground bg-muted/50 p-3 rounded-md">
+                          {restaurantData.description}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -960,17 +1180,13 @@ const RestaurantDashboardPage: React.FC = () => {
                    <Eye className="mr-2 h-4 w-4" />
                    View All Orders
                  </Button>
-                 <Button variant="outline" className="w-full justify-start" onClick={() => toast({ title: "Coming Soon", description: "Restaurant settings will be available soon!" })}>
-                   <Settings className="mr-2 h-4 w-4" />
-                   Restaurant Settings
-                 </Button>
               </CardContent>
             </Card>
 
-            {/* Restaurant Status */}
+            {/* Restaurant Settings */}
             <Card className="mt-6">
               <CardHeader>
-                <CardTitle>Restaurant Status</CardTitle>
+                <CardTitle>Restaurant Settings</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">

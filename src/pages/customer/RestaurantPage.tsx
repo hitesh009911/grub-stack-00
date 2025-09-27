@@ -282,7 +282,7 @@ const RestaurantPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-24">
       {/* Header */}
       <div className="sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50 border-b">
         <div className="flex items-center gap-4 p-4">
@@ -475,20 +475,6 @@ const RestaurantPage: React.FC = () => {
         )}
       </div>
 
-      {/* Cart Summary */}
-      {items.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="font-medium">{items.length} items</span>
-            </div>
-            <Button onClick={() => navigate('/cart')} className="flex-1 max-w-xs">
-              View Cart
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

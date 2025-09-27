@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { validatePhoneNumber, formatPhoneInput } from '@/utils/validation';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import TruckLoader from '@/components/ui/TruckLoader';
+import { useNavigate } from 'react-router-dom';
 
 interface RegisterPageProps {
   onToggleMode: () => void;
@@ -19,18 +21,29 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
     name: '',
     email: '',
     phone: '',
+    address: '',
     password: '',
-    confirmPassword: '',
-    role: 'customer' as 'customer' | 'restaurant' | 'delivery'
+    confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [phoneError, setPhoneError] = useState<string>('');
   const { register, isLoading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handlePhoneChange = (value: string) => {
+    const formattedPhone = formatPhoneInput(value);
+    setFormData(prev => ({ ...prev, phone: formattedPhone }));
+    
+    // Validate phone number
+    const validation = validatePhoneNumber(formattedPhone);
+    setPhoneError(validation.isValid ? '' : validation.error || '');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.password) {
+    if (!formData.name || !formData.email || !formData.address || !formData.password) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -48,6 +61,20 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
       return;
     }
 
+    // Validate phone number if provided
+    if (formData.phone) {
+      const validation = validatePhoneNumber(formData.phone);
+      if (!validation.isValid) {
+        setPhoneError(validation.error || '');
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: validation.error || 'Please enter a valid phone number.'
+        });
+        return;
+      }
+    }
+
     if (formData.password.length < 6) {
       toast({
         variant: "destructive",
@@ -62,8 +89,9 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
+        address: formData.address,
         password: formData.password,
-        role: formData.role
+        role: 'customer'
       });
       
       toast({
@@ -71,21 +99,6 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
         description: "Welcome to GrubStack!"
       });
       
-      // If delivery agent, redirect to delivery dashboard
-      if (formData.role === 'delivery') {
-        // Store delivery agent data for the delivery dashboard
-        const agentData = {
-          id: Date.now(), // Temporary ID until we get real ID from backend
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          role: 'delivery',
-          status: 'AVAILABLE'
-        };
-        localStorage.setItem('deliveryAgent', JSON.stringify(agentData));
-        window.location.href = '/delivery/dashboard';
-        return;
-      }
       
       onRegisterSuccess();
     } catch (error: any) {
@@ -103,6 +116,19 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center p-4">
+      {/* Back to Welcome Page Button */}
+      <div className="absolute top-4 left-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Welcome
+        </Button>
+      </div>
+      
       {/* Theme Toggle */}
       <div className="absolute top-4 right-4">
         <ThemeToggle />
@@ -126,7 +152,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
             </motion.div>
             <div>
               <CardTitle className="text-2xl font-bold text-foreground">Join GrubStack</CardTitle>
-              <CardDescription className="text-muted-foreground">Create your account and start ordering</CardDescription>
+              <CardDescription className="text-muted-foreground">Create your customer account and start ordering</CardDescription>
             </div>
           </CardHeader>
           
@@ -160,21 +186,25 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
                   type="tel"
                   placeholder="Phone number (optional)"
                   value={formData.phone}
-                  onChange={(e) => updateFormData('phone', e.target.value)}
-                  className="pl-10"
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  className={`pl-10 ${phoneError ? 'border-red-500' : ''}`}
                 />
               </div>
+              {phoneError && (
+                <p className="text-sm text-red-500 mt-1">{phoneError}</p>
+              )}
 
-              <Select value={formData.role} onValueChange={(value) => updateFormData('role', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="customer">Customer</SelectItem>
-                  <SelectItem value="restaurant">Restaurant Owner</SelectItem>
-                  <SelectItem value="delivery">Delivery Partner</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Address *"
+                  value={formData.address}
+                  onChange={(e) => updateFormData('address', e.target.value)}
+                  className="pl-10"
+                  required
+                />
+              </div>
 
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -213,11 +243,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                  />
+                  <TruckLoader />
                 ) : (
                   <>
                     Create Account

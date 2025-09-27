@@ -92,4 +92,104 @@ public class NotificationService {
         }
         return CompletableFuture.completedFuture(null);
     }
+
+    @Async
+    public CompletableFuture<Void> sendAdminWelcomeNotification(String adminEmail, String adminName, String temporaryPassword) {
+        try {
+            restTemplate.postForObject(
+                "http://localhost:8089/notifications/admin-welcome?email={email}&adminName={name}&temporaryPassword={password}",
+                null,
+                Object.class,
+                adminEmail,
+                adminName,
+                temporaryPassword
+            );
+
+            logger.info("Admin welcome notification sent for admin: {}", adminEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send admin welcome notification for admin: {}", adminEmail, e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
+    public CompletableFuture<Void> sendAdminAccountDeactivatedNotification(String adminEmail, String adminName, String reason) {
+        try {
+            restTemplate.postForObject(
+                "http://localhost:8089/notifications/admin-account-deactivated?email={email}&adminName={name}&reason={reason}",
+                null,
+                Object.class,
+                adminEmail,
+                adminName,
+                reason
+            );
+
+            logger.info("Admin account deactivated notification sent for admin: {}", adminEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send admin account deactivated notification for admin: {}", adminEmail, e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
+    public CompletableFuture<Void> sendAdminAccountReactivatedNotification(String adminEmail, String adminName) {
+        try {
+            restTemplate.postForObject(
+                "http://localhost:8089/notifications/admin-account-reactivated?email={email}&adminName={name}",
+                null,
+                Object.class,
+                adminEmail,
+                adminName
+            );
+
+            logger.info("Admin account reactivated notification sent for admin: {}", adminEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send admin account reactivated notification for admin: {}", adminEmail, e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
+    public CompletableFuture<Void> sendAdminAccountDeletedNotification(String adminEmail, String adminName, String reason) {
+        try {
+            restTemplate.postForObject(
+                "http://localhost:8089/notifications/admin-account-deleted?email={email}&adminName={name}&reason={reason}",
+                null,
+                Object.class,
+                adminEmail,
+                adminName,
+                reason
+            );
+
+            logger.info("Admin account deleted notification sent for admin: {}", adminEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send admin account deleted notification for admin: {}", adminEmail, e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async
+    public CompletableFuture<Void> sendAdminProfileUpdatedNotification(String adminEmail, String adminName, Map<String, Object> changes) {
+        try {
+            restTemplate.postForObject(
+                "http://localhost:8089/notifications/admin-profile-updated?email={email}&adminName={name}",
+                changes,
+                Object.class,
+                adminEmail,
+                adminName
+            );
+
+            logger.info("Admin profile updated notification sent for admin: {}", adminEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send admin profile updated notification for admin: {}", adminEmail, e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
 }
+
+
+
+
+
+
+

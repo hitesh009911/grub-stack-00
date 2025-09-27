@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Reactivated - GrubStack Admin</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            margin: 0;
+        }
+        .content {
+            padding: 30px;
+        }
+        .status-message {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .account-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .value {
+            color: #6c757d;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .highlight {
+            color: #28a745;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">GrubStack</div>
+            <h1 class="title">Account Reactivated</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear <span class="highlight" th:text="${adminName}">Admin Name</span>,</p>
+            
+            <div class="status-message">
+                <h3>🎉 Great News!</h3>
+                <p>Your admin account has been reactivated and you now have full access to the admin panel again.</p>
+            </div>
+            
+            <div class="account-info">
+                <div class="info-item">
+                    <span class="label">Email:</span>
+                    <span class="value" th:text="${adminEmail}">admin@grubstack.com</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Status:</span>
+                    <span class="value" style="color: #28a745; font-weight: bold;">ACTIVE</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Reactivated On:</span>
+                    <span class="value" th:text="${#dates.format(#dates.createNow(), 'MMMM dd, yyyy \'at\' HH:mm')}">January 01, 2025 at 12:00</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Role:</span>
+                    <span class="value">Administrator</span>
+                </div>
+            </div>
+            
+            <h3>You now have access to:</h3>
+            <ul>
+                <li>Admin dashboard and all administrative functions</li>
+                <li>Delivery agent management and approvals</li>
+                <li>Restaurant registration oversight</li>
+                <li>System analytics and reporting</li>
+                <li>Customer support tools</li>
+            </ul>
+            
+            <p>You can immediately log in to the admin panel using your existing credentials.</p>
+            
+            <p>Welcome back to the GrubStack admin team!</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>GrubStack Admin Team</strong></p>
+            <p>Email: admin@grubstack.com | Phone: 1-800-GRUBSTACK</p>
+            <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> GrubStack. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

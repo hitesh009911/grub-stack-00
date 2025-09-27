@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Deleted - GrubStack</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            margin: 0;
+        }
+        .content {
+            padding: 30px;
+        }
+        .status-message {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .restaurant-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .value {
+            color: #6c757d;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+        .highlight {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">GrubStack</div>
+            <h1 class="title">Restaurant Deleted</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear <span class="highlight" th:text="${ownerName}">Restaurant Owner</span>,</p>
+            
+            <div class="status-message">
+                <h3>⚠️ Restaurant Account Deleted</h3>
+                <p>We are writing to inform you that your restaurant account has been permanently deleted from the GrubStack platform.</p>
+            </div>
+            
+            <div class="restaurant-info">
+                <h4>Restaurant Details:</h4>
+                <div class="info-item">
+                    <span class="label">Restaurant Name:</span>
+                    <span class="value" th:text="${restaurantName}">Restaurant Name</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Owner Name:</span>
+                    <span class="value" th:text="${ownerName}">Owner Name</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Email:</span>
+                    <span class="value" th:text="${email}">restaurant@example.com</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Status:</span>
+                    <span class="value" style="color: #dc3545; font-weight: bold;">DELETED</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Deleted On:</span>
+                    <span class="value" th:text="${#dates.format(#dates.createNow(), 'MMMM dd, yyyy \'at\' HH:mm')}">January 01, 2025 at 12:00</span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Reason:</span>
+                    <span class="value" th:text="${reason}">Account deleted by system administrator</span>
+                </div>
+            </div>
+            
+            <h3>What this means:</h3>
+            <ul>
+                <li>Your restaurant is no longer visible on the GrubStack platform</li>
+                <li>All restaurant data has been permanently removed</li>
+                <li>You can no longer access the restaurant dashboard</li>
+                <li>Any pending orders have been cancelled</li>
+                <li>You will no longer receive order notifications</li>
+            </ul>
+            
+            <p>We want to take this opportunity to thank you for being part of the GrubStack community. We appreciate the time you spent with us.</p>
+            
+            <p>If you believe this action was taken in error, or if you have any questions about this deletion, please contact our support team immediately at <a href="mailto:support@grubstack.com">support@grubstack.com</a>.</p>
+            
+            <p>We wish you all the best in your future endeavors.</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>GrubStack Restaurant Team</strong></p>
+            <p>Email: support@grubstack.com | Phone: 1-800-GRUBSTACK</p>
+            <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> GrubStack. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

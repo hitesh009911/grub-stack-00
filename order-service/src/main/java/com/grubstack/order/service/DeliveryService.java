@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -32,13 +33,17 @@ public class DeliveryService {
     }
     
     private void createDelivery(OrderEntity order) {
+        // Get restaurant address from restaurant service
+        String restaurantAddress = getRestaurantAddress(order.getRestaurantId());
+        String customerAddress = getCustomerAddress(order.getUserId());
+        
         // Create delivery request
         DeliveryRequest deliveryRequest = new DeliveryRequest(
             order.getId(),
             order.getRestaurantId(),
             order.getUserId(),
-            "Restaurant Address", // In real app, get from restaurant service
-            "Customer Address"    // In real app, get from user service
+            restaurantAddress,
+            customerAddress
         );
         
         // Call delivery service
@@ -49,6 +54,43 @@ public class DeliveryService {
         );
     }
     
+    private String getRestaurantAddress(Long restaurantId) {
+        try {
+            // Call restaurant service to get restaurant details
+            String url = "http://localhost:8083/restaurants/" + restaurantId;
+            Map<String, Object> restaurant = restTemplate.getForObject(url, Map.class);
+            
+            if (restaurant != null && restaurant.containsKey("address")) {
+                return (String) restaurant.get("address");
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to get restaurant address for ID " + restaurantId + ": " + e.getMessage());
+        }
+        
+        // Fallback to a default address if restaurant service is unavailable
+        return "123 Main Street, Downtown, City - 12345";
+    }
+    
+    private String getCustomerAddress(Long customerId) {
+        try {
+            // Call user service to get customer details
+            String url = "http://localhost:8082/users/" + customerId;
+            Map<String, Object> user = restTemplate.getForObject(url, Map.class);
+            
+            if (user != null && user.containsKey("address")) {
+                String address = (String) user.get("address");
+                if (address != null && !address.trim().isEmpty()) {
+                    return address;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to get customer address for ID " + customerId + ": " + e.getMessage());
+        }
+        
+        // Fallback to a default address if user service is unavailable or address is empty
+        return "456 Oak Avenue, Uptown, City - 67890";
+    }
+
     private record DeliveryRequest(
         Long orderId,
         Long restaurantId,
@@ -57,4 +99,11 @@ public class DeliveryService {
         String deliveryAddress
     ) {}
 }
+
+
+
+
+
+
+
 

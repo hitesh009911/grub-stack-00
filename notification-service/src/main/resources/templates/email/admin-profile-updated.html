@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Updated - GrubStack Admin</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            margin: 0;
+        }
+        .content {
+            padding: 30px;
+        }
+        .status-message {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .changes-list {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .change-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .change-item:last-child {
+            border-bottom: none;
+        }
+        .field-name {
+            font-weight: bold;
+            color: #495057;
+        }
+        .old-value {
+            color: #dc3545;
+            text-decoration: line-through;
+        }
+        .new-value {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .security-notice {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+        .highlight {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        .password-change {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">GrubStack</div>
+            <h1 class="title">Profile Updated</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear <span class="highlight" th:text="${adminName}">Admin Name</span>,</p>
+            
+            <div class="status-message">
+                <h3>📝 Profile Update Notification</h3>
+                <p>Your admin profile has been successfully updated. Below are the details of the changes made:</p>
+            </div>
+            
+            <div class="changes-list">
+                <h4>Changes Made:</h4>
+                <div class="change-item" th:if="${changes.fullName != null and changes.fullName != ''}">
+                    <span class="field-name">Full Name:</span>
+                    <span>
+                        <span class="old-value" th:text="${changes.fullName.old}">Old Name</span> 
+                        → 
+                        <span class="new-value" th:text="${changes.fullName.new}">New Name</span>
+                    </span>
+                </div>
+                <div class="change-item" th:if="${changes.email != null and changes.email != ''}">
+                    <span class="field-name">Email:</span>
+                    <span>
+                        <span class="old-value" th:text="${changes.email.old}">old@email.com</span> 
+                        → 
+                        <span class="new-value" th:text="${changes.email.new}">new@email.com</span>
+                    </span>
+                </div>
+                <div class="change-item" th:if="${changes.role != null and changes.role != ''}">
+                    <span class="field-name">Role:</span>
+                    <span>
+                        <span class="old-value" th:text="${changes.role.old}">Old Role</span> 
+                        → 
+                        <span class="new-value" th:text="${changes.role.new}">New Role</span>
+                    </span>
+                </div>
+                <div class="change-item" th:if="${changes.permissions != null and changes.permissions != ''}">
+                    <span class="field-name">Permissions:</span>
+                    <span>
+                        <span class="old-value" th:text="${changes.permissions.old}">Old Permissions</span> 
+                        → 
+                        <span class="new-value" th:text="${changes.permissions.new}">New Permissions</span>
+                    </span>
+                </div>
+                <div class="change-item" th:if="${changes.passwordChanged}">
+                    <span class="field-name">Password:</span>
+                    <span class="new-value">Updated</span>
+                </div>
+            </div>
+            
+            <div class="password-change" th:if="${changes.passwordChanged}">
+                <h4>🔒 Password Security Notice</h4>
+                <p><strong>Your password has been changed.</strong> If you did not make this change, please contact our support team immediately and consider changing your password again.</p>
+                <p>For security reasons, we cannot show the old or new password in this email.</p>
+            </div>
+            
+            <div class="security-notice">
+                <strong>🔐 Security Reminder:</strong>
+                <p>If you did not make these changes, please contact our support team immediately at <a href="mailto:support@grubstack.com">support@grubstack.com</a>.</p>
+            </div>
+            
+            <h3>What to do next:</h3>
+            <ul>
+                <li>Review the changes above to ensure they are correct</li>
+                <li>If you changed your password, make sure to update it in any saved password managers</li>
+                <li>If you changed your email, you may need to verify the new email address</li>
+                <li>If you notice any unauthorized changes, contact support immediately</li>
+            </ul>
+            
+            <p>You can view your updated profile by logging into the admin dashboard.</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>GrubStack Admin Team</strong></p>
+            <p>Email: admin@grubstack.com | Phone: 1-800-GRUBSTACK</p>
+            <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> GrubStack. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

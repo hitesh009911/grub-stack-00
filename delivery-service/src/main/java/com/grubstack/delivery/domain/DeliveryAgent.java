@@ -95,6 +95,6 @@ public class DeliveryAgent {
     public void setLastActiveAt(Instant lastActiveAt) { this.lastActiveAt = lastActiveAt; }
     
     public enum AgentStatus {
-        AVAILABLE, BUSY, OFFLINE, ACTIVE, INACTIVE
+        AVAILABLE, BUSY, OFFLINE, ACTIVE, INACTIVE, PENDING_APPROVAL
     }
 }

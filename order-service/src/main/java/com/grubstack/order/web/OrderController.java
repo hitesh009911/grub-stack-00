@@ -152,6 +152,31 @@ public class OrderController {
 		}).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
+	@PutMapping("/{id}/cancel")
+	public ResponseEntity<?> cancelOrder(@PathVariable("id") Long id) {
+		return orderRepo.findById(id).map(o -> {
+			// Check if order can be cancelled (not in PREPARING, DELIVERED, or CANCELLED state)
+			if (o.getStatus() == OrderEntity.OrderStatus.PREPARING || 
+				o.getStatus() == OrderEntity.OrderStatus.DELIVERED || 
+				o.getStatus() == OrderEntity.OrderStatus.CANCELLED) {
+				return ResponseEntity.badRequest().build();
+			}
+			
+			o.setStatus(OrderEntity.OrderStatus.CANCELLED);
+			OrderEntity saved = orderRepo.save(o);
+			
+			// Send cancellation notification
+			notificationService.sendOrderCancelledNotification(
+				saved.getId(),
+				saved.getUserId(),
+				"hitumysuru@gmail.com", // Using test email
+				"Restaurant " + saved.getRestaurantId() // TODO: Get real restaurant name
+			);
+			
+			return ResponseEntity.ok(toOrderDTO(saved));
+		}).orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
 
 	public record PlaceOrder(@NotNull Long restaurantId, @NotNull Long userId, @NotNull List<PlaceOrderItem> items) {}
     public record PlaceOrderItem(@NotNull Long menuItemId, @NotNull Integer quantity, @NotNull Integer priceCents) {}

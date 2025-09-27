@@ -49,7 +49,7 @@ class IntegrationTest {
     void createAndAssignDelivery_IntegrationTest() throws Exception {
         // 1. Create a delivery agent
         DeliveryController.CreateAgentRequest agentRequest = new DeliveryController.CreateAgentRequest(
-            "John Doe", "john@example.com", "123-456-7890", "Bike", "LIC123"
+            "John Doe", "john@example.com", "password123", "123-456-7890", "Bike", "LIC123"
         );
 
         mockMvc.perform(post("/deliveries/agents")
@@ -267,7 +267,7 @@ class IntegrationTest {
         mockMvc.perform(post("/deliveries/agents")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(new DeliveryController.CreateAgentRequest(
-                    "Another Agent", "john@example.com", "987-654-3210", "Car", "LIC456"))))
+                    "Another Agent", "john@example.com", "password456", "987-654-3210", "Car", "LIC456"))))
                 .andExpect(status().isBadRequest());
     }
 }

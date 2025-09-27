@@ -15,6 +15,7 @@ import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.Authenticator;
 import jakarta.mail.PasswordAuthentication;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,6 +67,91 @@ public class NotificationController {
             return ResponseEntity.badRequest().body(Map.of(
                 "status", "error",
                 "message", "Failed to send test email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/welcome-email")
+    public ResponseEntity<Map<String, String>> sendWelcomeEmail(
+            @RequestParam String email,
+            @RequestParam String userName) {
+        try {
+            // Use the new sendWelcomeEmail method (similar to order confirmation)
+            notificationService.sendWelcomeEmail(email, userName);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Welcome email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send welcome email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/delivery-agent-registration")
+    public ResponseEntity<Map<String, String>> sendDeliveryAgentRegistrationEmail(
+            @RequestParam String email,
+            @RequestParam String agentName,
+            @RequestParam String phone,
+            @RequestParam String vehicleType) {
+        try {
+            notificationService.sendDeliveryAgentRegistrationAcknowledgment(email, agentName, phone, vehicleType);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Delivery agent registration email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send registration email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/delivery-agent-approval")
+    public ResponseEntity<Map<String, String>> sendDeliveryAgentApprovalEmail(
+            @RequestParam String email,
+            @RequestParam String agentName,
+            @RequestParam String loginPassword) {
+        try {
+            notificationService.sendDeliveryAgentApprovalNotification(email, agentName, loginPassword);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Delivery agent approval email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send approval email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/delivery-agent-rejection")
+    public ResponseEntity<Map<String, String>> sendDeliveryAgentRejectionEmail(
+            @RequestParam String email,
+            @RequestParam String agentName,
+            @RequestParam String reason) {
+        try {
+            notificationService.sendDeliveryAgentRejectionNotification(email, agentName, reason);
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Delivery agent rejection email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send rejection email: " + e.getMessage(),
                 "error", e.getClass().getSimpleName()
             ));
         }
@@ -192,6 +278,190 @@ public class NotificationController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Failed to get notification statistics: " + e.getMessage()
+            ));
+        }
+    }
+    
+    @PostMapping("/delivery-agent-deletion")
+    public ResponseEntity<Map<String, String>> sendDeliveryAgentDeletionEmail(
+            @RequestParam String email, 
+            @RequestParam String agentName, 
+            @RequestParam String reason) {
+        try {
+            notificationService.sendDeliveryAgentDeletionNotification(email, agentName, reason);
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Delivery agent deletion email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send deletion email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    // Admin notification endpoints
+    @PostMapping("/admin-welcome")
+    public ResponseEntity<Map<String, String>> sendAdminWelcomeEmail(
+            @RequestParam String email, 
+            @RequestParam String adminName, 
+            @RequestParam String temporaryPassword) {
+        try {
+            notificationService.sendAdminWelcomeNotification(email, adminName, temporaryPassword);
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Admin welcome email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send admin welcome email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/admin-account-deactivated")
+    public ResponseEntity<Map<String, String>> sendAdminAccountDeactivatedEmail(
+            @RequestParam String email, 
+            @RequestParam String adminName, 
+            @RequestParam String reason) {
+        try {
+            notificationService.sendAdminAccountDeactivatedNotification(email, adminName, reason);
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Admin account deactivated email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send admin deactivated email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/admin-account-reactivated")
+    public ResponseEntity<Map<String, String>> sendAdminAccountReactivatedEmail(
+            @RequestParam String email, 
+            @RequestParam String adminName) {
+        try {
+            notificationService.sendAdminAccountReactivatedNotification(email, adminName);
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Admin account reactivated email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send admin reactivated email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/admin-account-deleted")
+    public ResponseEntity<Map<String, String>> sendAdminAccountDeletedEmail(
+            @RequestParam String email, 
+            @RequestParam String adminName, 
+            @RequestParam String reason) {
+        try {
+            notificationService.sendAdminAccountDeletedNotification(email, adminName, reason);
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Admin account deleted email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send admin deleted email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/admin-profile-updated")
+    public ResponseEntity<Map<String, String>> sendAdminProfileUpdatedEmail(
+            @RequestParam String email, 
+            @RequestParam String adminName,
+            @RequestBody Map<String, Object> changes) {
+        try {
+            notificationService.sendAdminProfileUpdatedNotification(email, adminName, changes);
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Admin profile updated email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send admin profile updated email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/restaurant-registration-acknowledgment")
+    public ResponseEntity<Map<String, String>> sendRestaurantRegistrationAcknowledgmentEmail(
+            @RequestParam String email,
+            @RequestParam String restaurantName,
+            @RequestParam String ownerName,
+            @RequestParam String phone,
+            @RequestParam String address) {
+        try {
+            notificationService.sendRestaurantRegistrationAcknowledgment(email, restaurantName, ownerName, phone, address);
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Restaurant registration acknowledgment email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send restaurant registration acknowledgment email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/restaurant-approved")
+    public ResponseEntity<Map<String, String>> sendRestaurantApprovedEmail(
+            @RequestParam String email,
+            @RequestParam String restaurantName,
+            @RequestParam String ownerName,
+            @RequestParam String password) {
+        try {
+            notificationService.sendRestaurantApprovedNotification(email, restaurantName, ownerName, password);
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Restaurant approved email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send restaurant approved email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
+            ));
+        }
+    }
+    
+    @PostMapping("/restaurant-deleted")
+    public ResponseEntity<Map<String, String>> sendRestaurantDeletedEmail(
+            @RequestParam String email,
+            @RequestParam String restaurantName,
+            @RequestParam String ownerName,
+            @RequestParam String reason) {
+        try {
+            notificationService.sendRestaurantDeletedNotification(email, restaurantName, ownerName, reason);
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Restaurant deleted email sent successfully to " + email
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to send restaurant deleted email: " + e.getMessage(),
+                "error", e.getClass().getSimpleName()
             ));
         }
     }

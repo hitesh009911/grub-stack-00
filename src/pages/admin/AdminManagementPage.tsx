@@ -66,7 +66,7 @@ const AdminManagementPage: React.FC = () => {
       id: 'admin-1',
       email: 'admin@grubstack.com',
       name: 'System Administrator',
-      role: 'super_admin',
+      role: 'admin',
       permissions: ['manage_restaurants', 'manage_admins', 'view_analytics', 'manage_users'],
       createdAt: '2025-01-01T00:00:00Z',
       lastLogin: '2025-01-15T10:30:00Z',
@@ -86,7 +86,7 @@ const AdminManagementPage: React.FC = () => {
       id: 'admin-3',
       email: 'support@grubstack.com',
       name: 'Support Admin',
-      role: 'support',
+      role: 'admin',
       permissions: ['view_analytics'],
       createdAt: '2025-01-10T00:00:00Z',
       lastLogin: '2025-01-13T09:15:00Z',
@@ -305,9 +305,7 @@ const AdminManagementPage: React.FC = () => {
   // Get role badge
   const getRoleBadge = (role: string) => {
     const variants = {
-      super_admin: { variant: 'default' as const, label: 'Super Admin' },
-      admin: { variant: 'secondary' as const, label: 'Admin' },
-      support: { variant: 'outline' as const, label: 'Support' }
+      admin: { variant: 'default' as const, label: 'Admin' }
     };
     
     const config = variants[role as keyof typeof variants] || variants.admin;
@@ -331,7 +329,7 @@ const AdminManagementPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="bg-background shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -416,9 +414,9 @@ const AdminManagementPage: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Super Admins</p>
+                  <p className="text-sm font-medium text-muted-foreground">Admins</p>
                   <p className="text-2xl font-bold text-foreground">
-                    {admins.filter(admin => admin.role === 'super_admin').length}
+                    {admins.filter(admin => admin.role === 'admin').length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -446,9 +444,7 @@ const AdminManagementPage: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="super_admin">Super Admin</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="support">Support</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -584,28 +580,30 @@ const AdminManagementPage: React.FC = () => {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder={editingAdmin ? 'Leave blank to keep current' : 'Enter password'}
-                  required={!editingAdmin}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-10 px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+            {/* Password field only for edit mode */}
+            {editingAdmin && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Leave blank to keep current password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-10 px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
             
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
@@ -614,9 +612,7 @@ const AdminManagementPage: React.FC = () => {
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="support">Support</SelectItem>
                 </SelectContent>
               </Select>
             </div>

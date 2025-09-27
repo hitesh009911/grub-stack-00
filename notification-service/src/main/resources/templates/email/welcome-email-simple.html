@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to GrubStack!</title>
+</head>
+<body>
+    <h1>Welcome to GrubStack!</h1>
+    <p>Hi <strong th:text="${userName}">User</strong>,</p>
+    <p>Welcome to GrubStack! We're excited to have you on board.</p>
+    <p>Your email: <span th:text="${userEmail}">user@example.com</span></p>
+    <p>Registration Date: <span th:text="${registrationDate}">Today</span></p>
+    <p>Thank you for joining us!</p>
+</body>
+</html>

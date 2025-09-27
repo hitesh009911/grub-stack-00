@@ -59,4 +59,46 @@ public class NotificationService {
         }
         return CompletableFuture.completedFuture(null);
     }
+
+    @Async
+    public CompletableFuture<Void> sendDeliveryAgentRegistrationAcknowledgment(
+            String agentEmail, String agentName, String phone, String vehicleType) {
+        try {
+            Map<String, Object> templateData = new HashMap<>();
+            templateData.put("agentName", agentName);
+            templateData.put("agentEmail", agentEmail);
+            templateData.put("phone", phone);
+            templateData.put("vehicleType", vehicleType);
+            templateData.put("registrationDate", java.time.LocalDateTime.now().toString());
+
+            Map<String, Object> notification = new HashMap<>();
+            notification.put("type", "DELIVERY_AGENT_REGISTRATION");
+            notification.put("channel", "EMAIL");
+            notification.put("recipient", agentEmail);
+            notification.put("subject", "Application Received - GrubStack Delivery");
+            notification.put("message", "Thank you for applying to join the GrubStack delivery team. Your application is under review.");
+            notification.put("notificationId", "delivery-agent-registration-" + UUID.randomUUID().toString());
+            notification.put("templateId", "delivery-agent-registration");
+            notification.put("templateData", templateData);
+            notification.put("priority", "NORMAL");
+
+            restTemplate.postForObject(
+                "http://localhost:8089/notifications/send",
+                notification,
+                Object.class
+            );
+
+            logger.info("Delivery agent registration acknowledgment sent for agent: {}", agentEmail);
+        } catch (Exception e) {
+            logger.error("Failed to send delivery agent registration acknowledgment for agent: {}", agentEmail, e);
+        }
+        return CompletableFuture.completedFuture(null);
+    }
 }
+
+
+
+
+
+
+

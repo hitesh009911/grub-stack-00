@@ -17,4 +17,6 @@ public interface DeliveryAgentRepository extends JpaRepository<DeliveryAgent, Lo
     
     @Query("SELECT da FROM DeliveryAgent da WHERE da.status = 'ACTIVE' ORDER BY da.lastActiveAt DESC")
     List<DeliveryAgent> findAvailableAgents();
+    
+    Optional<DeliveryAgent> findById(Long id);
 }

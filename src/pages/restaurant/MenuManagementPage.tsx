@@ -45,23 +45,13 @@ const MenuManagementPage: React.FC = () => {
     description: '',
     priceCents: 0
   });
-  const [restaurantId, setRestaurantId] = useState<number | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Get restaurant ID from localStorage
-  useEffect(() => {
-    const restaurantAuth = localStorage.getItem('restaurantAuth');
-    if (restaurantAuth) {
-      const restaurant = JSON.parse(restaurantAuth);
-      setRestaurantId(restaurant.id);
-    }
-  }, []);
+  const restaurantId = 1; // Demo restaurant ID
 
   // Fetch menu items
   const fetchMenuItems = async () => {
-    if (!restaurantId) return;
-    
     try {
       const response = await api.get(`/restaurants/${restaurantId}/menu`);
       setMenuItems(response.data || []);
@@ -78,23 +68,12 @@ const MenuManagementPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (restaurantId) {
-      fetchMenuItems();
-    }
-  }, [restaurantId]);
+    fetchMenuItems();
+  }, []);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!restaurantId) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Restaurant ID not found. Please log in again."
-      });
-      return;
-    }
     
     if (!formData.name.trim()) {
       toast({
@@ -118,7 +97,7 @@ const MenuManagementPage: React.FC = () => {
       setSaving(true);
       if (editingItem) {
         // Update existing item
-        await api.put(`/restaurants/${restaurantId}/menu/${editingItem.id}`, formData);
+        await api.put(`/restaurants/menu/${editingItem.id}`, formData);
         toast({
           title: "Success",
           description: "Menu item updated successfully"

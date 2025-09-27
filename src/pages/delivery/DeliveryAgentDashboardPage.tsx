@@ -15,11 +15,14 @@ import {
   Truck,
   LogOut,
   Phone,
-  Navigation
+  Navigation,
+  HelpCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import RocketLoader from '@/components/ui/RocketLoader';
 
 interface Delivery {
   id: number;
@@ -46,7 +49,7 @@ interface Agent {
   email: string;
   phone: string;
   vehicleType: string;
-  status: 'AVAILABLE' | 'BUSY' | 'OFFLINE';
+  status: 'ACTIVE' | 'BUSY' | 'OFFLINE';
 }
 
 const DeliveryAgentDashboardPage = () => {
@@ -81,6 +84,20 @@ const DeliveryAgentDashboardPage = () => {
     return null;
   };
 
+  // Fetch customer address from user service
+  const fetchCustomerAddress = async (customerId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8082/users/${customerId}`);
+      if (response.ok) {
+        const customer = await response.json();
+        return customer.address || null;
+      }
+    } catch (error) {
+      console.error('Error fetching customer address:', error);
+    }
+    return null;
+  };
+
   // Fetch agent's deliveries with throttling
   const fetchDeliveries = async (force = false) => {
     if (!agent) return;
@@ -105,13 +122,17 @@ const DeliveryAgentDashboardPage = () => {
       
       const data = await response.json();
       
-      // Fetch order status for each delivery
+      // Fetch order status and customer address for each delivery
       const deliveriesWithOrderStatus = await Promise.all(
         data.map(async (delivery: Delivery) => {
-          const orderDetails = await fetchOrderDetails(delivery.orderId);
+          const [orderDetails, customerAddress] = await Promise.all([
+            fetchOrderDetails(delivery.orderId),
+            fetchCustomerAddress(delivery.customerId)
+          ]);
           return {
             ...delivery,
-            orderStatus: orderDetails?.status || 'PENDING'
+            orderStatus: orderDetails?.status || 'PENDING',
+            deliveryAddress: customerAddress || delivery.deliveryAddress
           };
         })
       );
@@ -243,7 +264,7 @@ const DeliveryAgentDashboardPage = () => {
       
       if (response.ok) {
         // Update local agent status
-        const updatedAgent = { ...agent, status: newStatus as 'AVAILABLE' | 'BUSY' | 'OFFLINE' };
+        const updatedAgent = { ...agent, status: newStatus as 'ACTIVE' | 'BUSY' | 'OFFLINE' };
         localStorage.setItem('deliveryAgent', JSON.stringify(updatedAgent));
         
         // Update the agent state to reflect the change
@@ -306,8 +327,13 @@ const DeliveryAgentDashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <RocketLoader />
+          <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mt-4">
+            Loading your delivery dashboard...
+          </p>
+        </div>
       </div>
     );
   }
@@ -317,7 +343,7 @@ const DeliveryAgentDashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black">
+    <div className="min-h-screen bg-gray-50 dark:bg-black pb-24">
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 shadow-sm border-b dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -332,17 +358,44 @@ const DeliveryAgentDashboardPage = () => {
             <div className="flex items-center space-x-4">
               <ThemeToggle />
               
+              {/* Help Button */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <HelpCircle className="h-4 w-4 mr-2" />
+                    Help
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Contact Support</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground">
+                      Need help or have questions? Contact our admin team:
+                    </p>
+                    <div className="p-4 bg-muted rounded-lg">
+                      <p className="font-medium">Admin Email:</p>
+                      <p className="font-mono text-primary">admin@grubstack.com</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      We'll get back to you within 24 hours.
+                    </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
               {/* Status Management */}
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-600 dark:text-gray-300">Status:</span>
                 <div className="flex space-x-1">
                   <Button
                     size="sm"
-                    variant={agent.status === 'AVAILABLE' ? 'default' : 'outline'}
-                    onClick={() => handleAgentStatusUpdate('AVAILABLE')}
+                    variant={agent.status === 'ACTIVE' ? 'default' : 'outline'}
+                    onClick={() => handleAgentStatusUpdate('ACTIVE')}
                     className="text-xs"
                   >
-                    Available
+                    Active
                   </Button>
                   <Button
                     size="sm"
@@ -421,6 +474,7 @@ const DeliveryAgentDashboardPage = () => {
             Refresh
           </Button>
         </div>
+
 
         {/* Current Deliveries */}
         <div className="mb-8">

@@ -132,13 +132,14 @@ public class AdminUser {
     }
 
     public enum Role {
-        SUPER_ADMIN, ADMIN, SUPPORT
+        ADMIN
     }
 
     public enum Permission {
         MANAGE_RESTAURANTS,
         MANAGE_ADMINS,
         MANAGE_USERS,
+        MANAGE_DELIVERY_AGENTS,
         VIEW_ANALYTICS,
         MANAGE_ORDERS
     }

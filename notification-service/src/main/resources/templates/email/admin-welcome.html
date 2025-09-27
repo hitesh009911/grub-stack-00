@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to GrubStack Admin</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 24px;
+            margin: 0;
+        }
+        .content {
+            padding: 30px;
+        }
+        .welcome-message {
+            background-color: #e8f5e8;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .credentials {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .credential-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .credential-item:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .value {
+            font-family: 'Courier New', monospace;
+            background-color: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #495057;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .highlight {
+            color: #667eea;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">GrubStack</div>
+            <h1 class="title">Welcome to Admin Panel</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear <span class="highlight" th:text="${adminName}">Admin Name</span>,</p>
+            
+            <div class="welcome-message">
+                <h3>🎉 Congratulations!</h3>
+                <p>You have been granted administrative access to the GrubStack platform. As an admin, you'll have access to powerful tools to manage the entire system.</p>
+            </div>
+            
+            <p>Your admin account has been successfully created with the following credentials:</p>
+            
+            <div class="credentials">
+                <div class="credential-item">
+                    <span class="label">Email:</span>
+                    <span class="value" th:text="${adminEmail}">admin@grubstack.com</span>
+                </div>
+                <div class="credential-item">
+                    <span class="label">Temporary Password:</span>
+                    <span class="value" th:text="${temporaryPassword}">temp123</span>
+                </div>
+                <div class="credential-item">
+                    <span class="label">Role:</span>
+                    <span class="value">Administrator</span>
+                </div>
+            </div>
+            
+            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin: 20px 0;">
+                <strong>⚠️ Important Security Note:</strong>
+                <p>Please change your temporary password immediately after your first login for security purposes.</p>
+            </div>
+            
+            <h3>What you can do as an Admin:</h3>
+            <ul>
+                <li>Manage delivery agents and their approvals</li>
+                <li>Oversee restaurant registrations and approvals</li>
+                <li>Monitor system performance and analytics</li>
+                <li>Handle customer support and escalations</li>
+                <li>Configure system settings and preferences</li>
+            </ul>
+            
+            <p>You can access the admin dashboard by logging in with your credentials at our platform.</p>
+            
+            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+        </div>
+        
+        <div class="footer">
+            <p><strong>GrubStack Admin Team</strong></p>
+            <p>Email: admin@grubstack.com | Phone: 1-800-GRUBSTACK</p>
+            <p>&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2025</span> GrubStack. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

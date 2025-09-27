@@ -33,10 +33,19 @@ export const useNotifications = () => {
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationsCleared, setNotificationsCleared] = useState(false);
 
   // Load notifications from localStorage on mount
   useEffect(() => {
     const savedNotifications = localStorage.getItem('grub-stack-notifications');
+    const clearedState = localStorage.getItem('grub-stack-notifications-cleared');
+    
+    if (clearedState) {
+      setNotificationsCleared(true);
+      setNotifications([]);
+      return;
+    }
+    
     if (savedNotifications) {
       try {
         const parsed = JSON.parse(savedNotifications);
@@ -52,8 +61,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
-  // Auto-clear read notifications after 5 minutes
+  // Auto-clear read notifications after 5 minutes (only if not permanently cleared)
   useEffect(() => {
+    if (notificationsCleared) return;
+    
     const interval = setInterval(() => {
       const now = new Date();
       const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
@@ -67,7 +78,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
-  }, []);
+  }, [notificationsCleared]);
 
   // Save notifications to localStorage whenever notifications change
   useEffect(() => {
@@ -75,6 +86,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [notifications]);
 
   const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+    // Don't add notifications if they've been permanently cleared
+    if (notificationsCleared) return;
+    
     const newNotification: Notification = {
       ...notification,
       id: `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -107,6 +121,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const clearAllNotifications = () => {
     setNotifications([]);
+    setNotificationsCleared(true);
+    localStorage.setItem('grub-stack-notifications-cleared', 'true');
   };
 
   const clearReadNotifications = () => {

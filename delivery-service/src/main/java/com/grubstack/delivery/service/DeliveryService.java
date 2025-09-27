@@ -183,6 +183,7 @@ public class DeliveryService {
         String passwordHash = passwordEncoder.encode(password);
         
         DeliveryAgent agent = new DeliveryAgent(name, email, phone, vehicleType, licenseNumber, passwordHash);
+        agent.setStatus(DeliveryAgent.AgentStatus.PENDING_APPROVAL);
         return agentRepo.save(agent);
     }
     
@@ -209,6 +210,18 @@ public class DeliveryService {
     
     public List<DeliveryAgent> getAllAgents() {
         return agentRepo.findAll();
+    }
+    
+    public List<DeliveryAgent> getPendingAgents() {
+        return agentRepo.findByStatus(DeliveryAgent.AgentStatus.PENDING_APPROVAL);
+    }
+    
+    public Optional<DeliveryAgent> getAgentByEmail(String email) {
+        return agentRepo.findByEmail(email);
+    }
+    
+    public Optional<DeliveryAgent> getAgentById(Long id) {
+        return agentRepo.findById(id);
     }
     
     @Transactional
@@ -246,6 +259,18 @@ public class DeliveryService {
         return agentRepo.save(agent);
     }
     
+    @Transactional
+    public DeliveryAgent approveAgent(Long agentId) {
+        DeliveryAgent agent = agentRepo.findById(agentId)
+                .orElseThrow(() -> new IllegalArgumentException("Agent not found"));
+        
+        agent.setStatus(DeliveryAgent.AgentStatus.ACTIVE);
+        agent.setLastActiveAt(Instant.now());
+        
+        return agentRepo.save(agent);
+    }
+    
+    
     // Auto-assignment logic
     @Transactional
     public Delivery autoAssignDelivery(Long deliveryId) {
@@ -275,6 +300,17 @@ public class DeliveryService {
         
         if (!activeDeliveries.isEmpty()) {
             throw new IllegalArgumentException("Cannot delete agent with active deliveries. Please reassign or complete deliveries first.");
+        }
+        
+        // Check if agent has any deliveries at all (for foreign key constraint)
+        List<Delivery> allDeliveries = deliveryRepo.findByAgentId(agentId);
+        
+        if (!allDeliveries.isEmpty()) {
+            // Set agent_id to null for all deliveries to avoid foreign key constraint
+            for (Delivery delivery : allDeliveries) {
+                delivery.setAgent(null);
+                deliveryRepo.save(delivery);
+            }
         }
         
         agentRepo.delete(agent);

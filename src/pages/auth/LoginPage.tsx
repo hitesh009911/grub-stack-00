@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, ChefHat, Shield, Truck } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, ChefHat, Shield, Truck, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import TruckLoader from '@/components/ui/TruckLoader';
 
 interface LoginPageProps {
   onToggleMode: () => void;
@@ -118,6 +119,19 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggleMode, onLoginSuccess }) =
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center p-4">
+      {/* Back to Welcome Page Button */}
+      <div className="absolute top-4 left-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Welcome
+        </Button>
+      </div>
+      
       {/* Theme Toggle */}
       <div className="absolute top-4 right-4">
         <ThemeToggle />
@@ -188,11 +202,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggleMode, onLoginSuccess }) =
                 disabled={isLoading}
               >
                 {isLoading ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                  />
+                  <TruckLoader />
                 ) : (
                   <>
                     {isAdminLogin ? 'Sign In as Admin' : 'Sign In'}
@@ -216,16 +226,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggleMode, onLoginSuccess }) =
               </Button>
             </div>
 
-            {/* Admin Demo Credentials */}
-            {isAdminLogin && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Admin Demo Credentials:</h4>
-                <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-                  <p><strong>Email:</strong> admin@grubstack.com</p>
-                  <p><strong>Password:</strong> admin123</p>
-                </div>
-              </div>
-            )}
             
             <div className="space-y-3">
               <div className="text-center">

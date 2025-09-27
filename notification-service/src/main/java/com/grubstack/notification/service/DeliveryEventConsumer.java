@@ -1,6 +1,7 @@
 package com.grubstack.notification.service;
 
 import com.grubstack.notification.model.DeliveryEvent;
+import com.grubstack.notification.model.NotificationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,9 @@ public class DeliveryEventConsumer {
     
     @Autowired
     private NotificationService notificationService;
+    
+    @Autowired
+    private EmailService emailService;
     
     @KafkaListener(topics = "delivery-events", groupId = "notification-service-group")
     public void consumeDeliveryEvent(
@@ -58,4 +62,31 @@ public class DeliveryEventConsumer {
             logger.error("Error processing delivery status update: {}", event, e);
         }
     }
+    
+    @KafkaListener(topics = "notification-events", groupId = "notification-service-group")
+    public void consumeNotificationEvent(
+            @Payload NotificationRequest notification,
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
+            @Header(KafkaHeaders.OFFSET) long offset) {
+        
+        logger.info("Received notification event from topic: {}, partition: {}, offset: {}, notification: {}", 
+                   topic, partition, offset, notification.getNotificationId());
+        
+        try {
+            // Process the notification directly without going through sendDirectNotification
+            notificationService.processNotificationDirectly(notification);
+            
+            logger.info("Successfully processed notification event: {}", notification.getNotificationId());
+        } catch (Exception e) {
+            logger.error("Error processing notification event: {}", notification, e);
+        }
+    }
 }
+
+
+
+
+
+
+

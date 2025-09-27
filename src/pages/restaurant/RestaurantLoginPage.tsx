@@ -395,17 +395,6 @@ const RestaurantLoginPage: React.FC = () => {
               </Button>
             </form>
 
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
-              <h4 className="text-sm font-semibold text-orange-900 dark:text-orange-100 mb-2 flex items-center">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Demo Credentials
-              </h4>
-              <div className="text-sm text-orange-700 dark:text-orange-300 space-y-1">
-                <p><strong>Email:</strong> restaurant@grubstack.com</p>
-                <p><strong>Password:</strong> password</p>
-              </div>
-            </div>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">

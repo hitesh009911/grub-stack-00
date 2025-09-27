@@ -31,6 +31,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import BigTruckLoader from '@/components/ui/BigTruckLoader';
 
 interface Restaurant {
   id: number;
@@ -347,10 +348,7 @@ const RestaurantManagementPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading restaurants...</p>
-        </div>
+        <BigTruckLoader />
       </div>
     );
   }

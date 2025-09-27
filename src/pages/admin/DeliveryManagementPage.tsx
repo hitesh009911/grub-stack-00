@@ -28,6 +28,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { validatePhoneNumber, formatPhoneInput } from '@/utils/validation';
 import { api } from '@/lib/api';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useNavigate } from 'react-router-dom';
@@ -55,6 +56,15 @@ interface Delivery {
   };
 }
 
+interface Customer {
+  id: number;
+  email: string;
+  fullName: string;
+  address: string;
+  roles: string[];
+  createdAt: string;
+}
+
 interface DeliveryAgent {
   id: number;
   name: string;
@@ -62,8 +72,19 @@ interface DeliveryAgent {
   phone: string;
   vehicleType: string;
   licenseNumber: string;
-  status: 'AVAILABLE' | 'BUSY' | 'OFFLINE';
+  status: 'AVAILABLE' | 'BUSY' | 'OFFLINE' | 'ACTIVE';
   lastActiveAt: string;
+}
+
+interface PendingAgent {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  vehicleType: string;
+  licenseNumber: string;
+  createdAt: string;
+  status: 'PENDING_APPROVAL' | 'REJECTED';
 }
 
 const DeliveryManagementPage = () => {
@@ -72,6 +93,9 @@ const DeliveryManagementPage = () => {
   const navigate = useNavigate();
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [agents, setAgents] = useState<DeliveryAgent[]>([]);
+  const [pendingAgents, setPendingAgents] = useState<PendingAgent[]>([]);
+  const [rejectedAgents, setRejectedAgents] = useState<PendingAgent[]>([]);
+  const [customers, setCustomers] = useState<Map<number, Customer>>(new Map());
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -87,6 +111,7 @@ const DeliveryManagementPage = () => {
     vehicleType: '',
     licenseNumber: ''
   });
+  const [phoneError, setPhoneError] = useState<string>('');
   const [autoAssignTimer, setAutoAssignTimer] = useState<NodeJS.Timeout | null>(null);
   const [refreshTimer, setRefreshTimer] = useState<NodeJS.Timeout | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
@@ -108,10 +133,10 @@ const DeliveryManagementPage = () => {
     
     pendingDeliveries.forEach((delivery: Delivery) => {
       console.log(`Setting auto-assignment timer for delivery ${delivery.id} (Order ${delivery.orderId})`);
-      // Set timer for auto-assignment after 3 seconds
+      // Set timer for auto-assignment after 1 second for faster response
       const timer = setTimeout(() => {
         autoAssignDelivery(delivery);
-      }, 3000);
+      }, 1000);
       setAutoAssignTimer(timer);
     });
   };
@@ -124,7 +149,7 @@ const DeliveryManagementPage = () => {
       console.log('All agents:', agents.map(a => ({ id: a.id, name: a.name, status: a.status })));
       
       // Find available agents (they can handle multiple deliveries)
-      const availableAgents = agents.filter(agent => agent.status === 'AVAILABLE' || agent.status === 'ACTIVE');
+      const availableAgents = agents.filter(agent => agent.status === 'ACTIVE');
       console.log('Available agents count:', availableAgents.length);
       console.log('Available agents:', availableAgents.map(a => ({ id: a.id, name: a.name, status: a.status })));
       
@@ -259,20 +284,48 @@ const DeliveryManagementPage = () => {
     }
   };
 
+  // Fetch pending agents
+  const fetchPendingAgents = async () => {
+    try {
+      const response = await fetch('http://localhost:8086/deliveries/agents/pending', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setPendingAgents(data);
+      console.log('Pending agents fetched successfully:', data);
+    } catch (error) {
+      console.error('Error fetching pending agents:', error);
+      toast({
+        title: "Error",
+        description: `Failed to fetch pending agents: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchDeliveries(), fetchAgents()]);
+      await Promise.all([fetchDeliveries(), fetchAgents(), fetchPendingAgents()]);
       setLoading(false);
     };
     loadData();
     
-    // Set up refresh timer - refresh every 10 seconds (reduced frequency)
+    // Set up refresh timer - refresh every 5 seconds for better responsiveness
     const refreshInterval = setInterval(() => {
       fetchDeliveries();
       fetchAgents();
-    }, 10000);
+      fetchPendingAgents();
+    }, 5000);
     setRefreshTimer(refreshInterval);
     
     // Cleanup timers on unmount
@@ -294,12 +347,41 @@ const DeliveryManagementPage = () => {
     }
   }, [deliveries, agents]);
 
+  // Fetch customer data when deliveries are loaded
+  useEffect(() => {
+    if (deliveries.length > 0) {
+      const uniqueCustomerIds = [...new Set(deliveries.map(d => d.customerId))];
+      uniqueCustomerIds.forEach(customerId => {
+        if (!customers.has(customerId)) {
+          fetchCustomer(customerId);
+        }
+      });
+    }
+  }, [deliveries]);
+
   // Reset form when dialog opens
   useEffect(() => {
     if (isCreateAgentDialogOpen) {
       setNewAgent({ name: '', email: '', phone: '', vehicleType: '', licenseNumber: '' });
     }
   }, [isCreateAgentDialogOpen]);
+
+
+  // Fetch customer details
+  const fetchCustomer = async (customerId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8082/users/${customerId}`);
+      if (response.ok) {
+        const customer = await response.json();
+        setCustomers(prev => new Map(prev).set(customerId, customer));
+        return customer;
+      }
+    } catch (error) {
+      console.error('Error fetching customer:', error);
+    }
+    return null;
+  };
+
 
   // Filter deliveries
   const filteredDeliveries = deliveries.filter(delivery => {
@@ -339,9 +421,9 @@ const DeliveryManagementPage = () => {
   // Note: Status updates are handled by delivery agents, not admins
 
   // Handle delivery assignment
-  const handleAssignDelivery = async (deliveryId: number, agentId: number) => {
+  const handleAssignDelivery = async (deliveryId: number, agentId: number, isReassignment: boolean = false) => {
     try {
-      console.log(`Assigning delivery ${deliveryId} to agent ${agentId}`);
+      console.log(`${isReassignment ? 'Reassigning' : 'Assigning'} delivery ${deliveryId} to agent ${agentId}`);
       console.log('Available agents:', agents);
       console.log('Selected agent:', agents.find(a => a.id === agentId));
       
@@ -370,14 +452,14 @@ const DeliveryManagementPage = () => {
       setSelectedDelivery(null);
       toast({
         title: "Success",
-        description: "Delivery assigned successfully",
+        description: isReassignment ? "Delivery reassigned successfully" : "Delivery assigned successfully",
         duration: 3000
       });
     } catch (error) {
       console.error('Error assigning delivery:', error);
       toast({
         title: "Error",
-        description: `Failed to assign delivery: ${error.message}`,
+        description: `Failed to ${isReassignment ? 'reassign' : 'assign'} delivery: ${error.message}`,
         variant: "destructive"
       });
     }
@@ -411,6 +493,15 @@ const DeliveryManagementPage = () => {
       if (missingFields.length > 0) {
         console.error('Validation failed - missing fields:', missingFields);
         throw new Error(`Please fill in the following required fields: ${missingFields.join(', ')}`);
+      }
+
+      // Validate phone number
+      if (newAgent.phone) {
+        const validation = validatePhoneNumber(newAgent.phone);
+        if (!validation.isValid) {
+          setPhoneError(validation.error || '');
+          throw new Error(validation.error || 'Please enter a valid phone number.');
+        }
       }
       
       // Use API Gateway (CORS-safe)
@@ -463,10 +554,33 @@ const DeliveryManagementPage = () => {
     try {
       console.log(`Deleting agent ${agentId}`);
       
+      // First, check if agent has active deliveries
+      const deliveriesResponse = await fetch(`http://localhost:8086/deliveries/agent/${agentId}`);
+      if (deliveriesResponse.ok) {
+        const deliveries = await deliveriesResponse.json();
+        const activeDeliveries = deliveries.filter((d: any) => 
+          ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)
+        );
+        
+        if (activeDeliveries.length > 0) {
+          const deliveryList = activeDeliveries.map((d: any) => `Order #${d.orderId} (${d.status})`).join(', ');
+          toast({
+            title: "Cannot Delete Agent",
+            description: `This agent has ${activeDeliveries.length} active delivery(ies): ${deliveryList}. Please complete or reassign these deliveries first.`,
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
+      if (!confirm('Are you sure you want to delete this delivery agent? This action cannot be undone.')) {
+        return;
+      }
+      
       // Use API Gateway (CORS-safe)
       const requestHeaders = {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${admin?.token || 'admin-token'}`,
+        'Authorization': `Bearer admin-token`,
         'X-Admin-Email': admin?.email || 'admin@grubstack.com'
       };
 
@@ -477,7 +591,7 @@ const DeliveryManagementPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(errorData.error || errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       console.log('Agent deleted successfully');
@@ -488,11 +602,68 @@ const DeliveryManagementPage = () => {
 
       // Refresh agents list
       await fetchAgents(true);
+      await fetchPendingAgents();
     } catch (error) {
       console.error('Error deleting agent:', error);
       toast({
         title: "Error",
         description: `Failed to delete delivery agent: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle agent approval
+  const handleApproveAgent = async (agentId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8086/deliveries/agents/${agentId}/approve`, {
+        method: 'PUT'
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Delivery agent approved successfully"
+        });
+        await fetchAgents(true);
+        await fetchPendingAgents();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to approve agent');
+      }
+    } catch (error) {
+      console.error('Error approving agent:', error);
+      toast({
+        title: "Error",
+        description: `Failed to approve agent: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Handle agent rejection
+  const handleRejectAgent = async (agentId: number) => {
+    try {
+      const response = await fetch(`http://localhost:8086/deliveries/agents/${agentId}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Delivery agent rejected successfully"
+        });
+        await fetchAgents(true);
+        await fetchPendingAgents();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reject agent');
+      }
+    } catch (error) {
+      console.error('Error rejecting agent:', error);
+      toast({
+        title: "Error",
+        description: `Failed to reject agent: ${error.message}`,
         variant: "destructive"
       });
     }
@@ -585,10 +756,21 @@ const DeliveryManagementPage = () => {
                   <Input
                     id="phone"
                     value={newAgent.phone}
-                    onChange={(e) => setNewAgent({ ...newAgent, phone: e.target.value })}
-                    placeholder="+1234567890"
+                    onChange={(e) => {
+                      const formattedPhone = formatPhoneInput(e.target.value);
+                      setNewAgent({ ...newAgent, phone: formattedPhone });
+                      
+                      // Validate phone number
+                      const validation = validatePhoneNumber(formattedPhone);
+                      setPhoneError(validation.isValid ? '' : validation.error || '');
+                    }}
+                    placeholder="123-456-7890"
+                    className={phoneError ? 'border-red-500' : ''}
                     required
                   />
+                  {phoneError && (
+                    <p className="text-sm text-red-500 mt-1">{phoneError}</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="vehicleType">Vehicle Type *</Label>
@@ -686,6 +868,7 @@ const DeliveryManagementPage = () => {
         <TabsList>
           <TabsTrigger value="deliveries">Deliveries</TabsTrigger>
           <TabsTrigger value="agents">Agents</TabsTrigger>
+          <TabsTrigger value="approvals">Approvals</TabsTrigger>
         </TabsList>
 
         <TabsContent value="deliveries" className="space-y-6">
@@ -772,7 +955,9 @@ const DeliveryManagementPage = () => {
                                 <MapPin className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm font-medium">Delivery</span>
                               </div>
-                              <p className="text-sm text-muted-foreground">{delivery.deliveryAddress}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {customers.get(delivery.customerId)?.address || delivery.deliveryAddress}
+                              </p>
                             </div>
                           </div>
 
@@ -902,7 +1087,9 @@ const DeliveryManagementPage = () => {
                                 <MapPin className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm font-medium">Delivery</span>
                               </div>
-                              <p className="text-sm text-muted-foreground">{delivery.deliveryAddress}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {customers.get(delivery.customerId)?.address || delivery.deliveryAddress}
+                              </p>
                             </div>
                           </div>
                           
@@ -946,7 +1133,7 @@ const DeliveryManagementPage = () => {
                       <p className="text-sm text-muted-foreground">{agent.email}</p>
                     </div>
                     <Badge 
-                      variant={agent.status === 'AVAILABLE' ? 'default' : agent.status === 'BUSY' ? 'secondary' : 'destructive'}
+                      variant={agent.status === 'ACTIVE' ? 'default' : agent.status === 'BUSY' ? 'secondary' : 'destructive'}
                     >
                       {agent.status}
                     </Badge>
@@ -987,13 +1174,160 @@ const DeliveryManagementPage = () => {
             ))}
           </div>
         </TabsContent>
+
+        <TabsContent value="approvals" className="space-y-6">
+          {/* Pending Approvals Section */}
+          <div>
+            <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-950 rounded-lg">
+              <p className="text-sm text-orange-700 dark:text-orange-300">
+                <strong>Pending Approvals:</strong> Review and approve new delivery agent applications.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pendingAgents.map((agent) => (
+                <Card key={agent.id} className="border-orange-200 dark:border-orange-800">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold">{agent.name}</h3>
+                        <p className="text-sm text-muted-foreground">{agent.email}</p>
+                      </div>
+                      <Badge variant="outline" className="text-orange-600 border-orange-300">
+                        PENDING
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Phone:</span>
+                        <span>{agent.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Vehicle:</span>
+                        <span>{agent.vehicleType}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">License:</span>
+                        <span>{agent.licenseNumber}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Applied:</span>
+                        <span>{formatTime(agent.createdAt)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end gap-2 mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRejectAgent(agent.id)}
+                        className="h-8 px-3 text-red-600 hover:text-red-700"
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleApproveAgent(agent.id)}
+                        className="h-8 px-3 bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Approve
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {pendingAgents.length === 0 && (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Pending Approvals</h3>
+                <p className="text-muted-foreground">All delivery agent applications have been reviewed.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Rejected Agents Section */}
+          {rejectedAgents.length > 0 && (
+            <div className="mt-8">
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  <strong>Rejected Applications:</strong> Previously rejected delivery agent applications.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {rejectedAgents.map((agent) => (
+                  <Card key={agent.id} className="border-red-200 dark:border-red-800">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold">{agent.name}</h3>
+                          <p className="text-sm text-muted-foreground">{agent.email}</p>
+                        </div>
+                        <Badge variant="outline" className="text-red-600 border-red-300">
+                          REJECTED
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Phone:</span>
+                          <span>{agent.phone}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Vehicle:</span>
+                          <span>{agent.vehicleType}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">License:</span>
+                          <span>{agent.licenseNumber}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">Applied:</span>
+                          <span>{formatTime(agent.createdAt)}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-end gap-2 mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleReapproveAgent(agent.id)}
+                          className="h-8 px-3 text-green-600 hover:text-green-700"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Re-approve
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePermanentlyRejectAgent(agent.id)}
+                          className="h-8 px-3 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Remove
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Assignment Dialog */}
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign Delivery Agent</DialogTitle>
+            <DialogTitle>
+              {selectedDelivery?.status !== 'PENDING' ? 'Reassign Delivery Agent' : 'Assign Delivery Agent'}
+            </DialogTitle>
           </DialogHeader>
           {selectedDelivery && (
             <div className="space-y-4">
@@ -1009,7 +1343,7 @@ const DeliveryManagementPage = () => {
                     <SelectValue placeholder="Select an agent" />
                   </SelectTrigger>
                   <SelectContent>
-                    {agents.filter(agent => agent.status === 'AVAILABLE' || agent.status === 'ACTIVE').map((agent) => (
+                    {agents.filter(agent => agent.status === 'ACTIVE').map((agent) => (
                       <SelectItem key={agent.id} value={agent.id.toString()}>
                         {agent.name} ({agent.vehicleType}) - {agent.phone} - {agent.status}
                       </SelectItem>
@@ -1037,13 +1371,15 @@ const DeliveryManagementPage = () => {
       <Dialog open={isConfirmAssignOpen} onOpenChange={setIsConfirmAssignOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Assignment</DialogTitle>
+            <DialogTitle>
+              {selectedDelivery?.status !== 'PENDING' ? 'Confirm Reassignment' : 'Confirm Assignment'}
+            </DialogTitle>
           </DialogHeader>
           {selectedDelivery && selectedAgentId && (
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Are you sure you want to assign this delivery to the selected agent?
+                  Are you sure you want to {selectedDelivery.status !== 'PENDING' ? 'reassign' : 'assign'} this delivery to the selected agent?
                 </p>
                 <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                   <p className="font-medium">Order #{selectedDelivery.orderId}</p>
@@ -1068,14 +1404,20 @@ const DeliveryManagementPage = () => {
                 </Button>
                 <Button 
                   onClick={async () => {
-                    await handleAssignDelivery(selectedDelivery.id, selectedAgentId);
-                    setIsConfirmAssignOpen(false);
-                    setIsAssignDialogOpen(false);
-                    setSelectedDelivery(null);
-                    setSelectedAgentId(null);
+                    const isReassignment = selectedDelivery.status !== 'PENDING';
+                    try {
+                      await handleAssignDelivery(selectedDelivery.id, selectedAgentId, isReassignment);
+                      setIsConfirmAssignOpen(false);
+                      setIsAssignDialogOpen(false);
+                      setSelectedDelivery(null);
+                      setSelectedAgentId(null);
+                    } catch (error) {
+                      // Error handling is done in handleAssignDelivery
+                      console.error('Assignment failed:', error);
+                    }
                   }}
                 >
-                  Confirm Assignment
+                  {selectedDelivery.status !== 'PENDING' ? 'Confirm Reassignment' : 'Confirm Assignment'}
                 </Button>
               </div>
             </div>
