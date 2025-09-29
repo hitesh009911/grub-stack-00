@@ -1,4 +1,15 @@
 import React, { useState, useEffect } from 'react';
+
+interface MenuItem {
+  id: number;
+  name: string;
+  description: string;
+  priceCents: number;
+  restaurant: {
+    id: number;
+    name: string;
+  };
+}
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChefHat, 
@@ -51,7 +62,7 @@ interface Delivery {
 const OrderManagementPage: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
-  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,7 +100,7 @@ const OrderManagementPage: React.FC = () => {
             id: 1,
             restaurantId: restaurantId,
             userId: 6,
-            totalCents: 5000,
+            totalAmountCents: 5000,
             status: 'PENDING',
             createdAt: new Date().toISOString(),
             items: [
@@ -101,7 +112,7 @@ const OrderManagementPage: React.FC = () => {
             id: 2,
             restaurantId: restaurantId,
             userId: 7,
-            totalCents: 1800,
+            totalAmountCents: 1800,
             status: 'PREPARING',
             createdAt: new Date(Date.now() - 300000).toISOString(),
             items: [
@@ -112,7 +123,7 @@ const OrderManagementPage: React.FC = () => {
             id: 3,
             restaurantId: restaurantId,
             userId: 8,
-            totalCents: 3600,
+            totalAmountCents: 3600,
             status: 'READY',
             createdAt: new Date(Date.now() - 600000).toISOString(),
             items: [
@@ -123,7 +134,7 @@ const OrderManagementPage: React.FC = () => {
             id: 4,
             restaurantId: restaurantId,
             userId: 9,
-            totalCents: 2500,
+            totalAmountCents: 2500,
             status: 'PICKED_UP',
             createdAt: new Date(Date.now() - 900000).toISOString(),
             items: [
@@ -134,7 +145,7 @@ const OrderManagementPage: React.FC = () => {
             id: 5,
             restaurantId: restaurantId,
             userId: 10,
-            totalCents: 3200,
+            totalAmountCents: 3200,
             status: 'DELIVERED',
             createdAt: new Date(Date.now() - 1200000).toISOString(),
             items: [
@@ -529,7 +540,7 @@ const OrderManagementPage: React.FC = () => {
                         
                         <div className="flex items-center space-x-4">
                           <div className="text-right">
-                            <p className="font-semibold text-foreground">₹{((order.totalCents || 0) / 100).toFixed(2)}</p>
+                            <p className="font-semibold text-foreground">₹{((order.totalAmountCents || 0) / 100).toFixed(2)}</p>
                             <div className="mt-1">
                               {getStatusBadge(getOrderStatus(order))}
                             </div>
@@ -620,7 +631,7 @@ const OrderManagementPage: React.FC = () => {
                         
                         <div className="flex items-center space-x-4">
                           <div className="text-right">
-                            <p className="font-semibold text-foreground">₹{((order.totalCents || 0) / 100).toFixed(2)}</p>
+                            <p className="font-semibold text-foreground">₹{((order.totalAmountCents || 0) / 100).toFixed(2)}</p>
                             <div className="mt-1">
                               {getStatusBadge(getOrderStatus(order))}
                             </div>
@@ -668,7 +679,7 @@ const OrderManagementPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-                  <p className="text-foreground">₹{((selectedOrder.totalCents || 0) / 100).toFixed(2)}</p>
+                  <p className="text-foreground">₹{((selectedOrder.totalAmountCents || 0) / 100).toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Order Time</p>

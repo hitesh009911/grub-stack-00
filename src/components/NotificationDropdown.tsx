@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Notification } from '@/types/notification';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bell, 
@@ -62,11 +63,10 @@ const NotificationDropdown: React.FC = () => {
     }
   };
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
-      markAsRead(notification.id);
+      markAsRead(notification.id!);
     }
-    
     if (notification.actionUrl) {
       navigate(notification.actionUrl);
     }

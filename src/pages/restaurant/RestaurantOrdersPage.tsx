@@ -78,7 +78,7 @@ const RestaurantOrdersPage = () => {
         try {
           const allOrdersResponse = await api.get('/orders/all');
           const allOrders = allOrdersResponse.data || [];
-          restaurantOrders = allOrders.filter((order: any) => order.restaurantId === restaurantId);
+          restaurantOrders = allOrders.filter((order: Record<string, unknown>) => order.restaurantId === restaurantId);
         } catch (fallbackError) {
           console.log('Failed to fetch all orders, using mock data:', fallbackError);
           // Use mock data when API is not available

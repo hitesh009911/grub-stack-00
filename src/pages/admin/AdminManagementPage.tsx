@@ -99,16 +99,26 @@ const AdminManagementPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await api.get('/admin/users');
-      const adminData = response.data.map((admin: any) => ({
-        id: admin.id.toString(),
-        email: admin.email,
-        name: admin.fullName,
-        role: admin.role.toLowerCase(),
-        permissions: admin.permissions || [],
-        createdAt: admin.createdAt,
-        lastLogin: admin.lastLogin,
-        isActive: admin.isActive
-      }));
+  type Admin = {
+    id: string | number;
+    email: string;
+    fullName: string;
+    role: string;
+    permissions?: string[];
+    createdAt?: string;
+    lastLogin?: string;
+    isActive?: boolean;
+  };
+  const adminData = (response.data as Admin[]).map((admin) => ({
+    id: admin.id.toString(),
+    email: admin.email,
+    name: admin.fullName,
+    role: admin.role.toLowerCase(),
+    permissions: admin.permissions || [],
+    createdAt: admin.createdAt,
+    lastLogin: admin.lastLogin,
+    isActive: admin.isActive
+  }));
       setAdmins(adminData);
     } catch (error) {
       console.error('Error fetching admins:', error);

@@ -107,7 +107,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onToggleMode, onLoginSuccess }) =
         });
         onLoginSuccess();
       }
-    } catch (error: any) {
+  } catch (error) {
       toast({
         variant: "destructive",
         title: "Login failed",

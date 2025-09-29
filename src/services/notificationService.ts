@@ -1,9 +1,5 @@
-import { useNotifications } from '@/contexts/NotificationContext';
-
-// This service provides helper functions to trigger notifications
-// Note: This should be used within React components that have access to the NotificationContext
-
-export const createSampleNotifications = (addNotification: any) => {
+import { Notification } from "@/types/notification";
+export const createSampleNotifications = (addNotification: (n: Notification) => void) => {
   // Add some sample notifications for demo
   addNotification({
     title: 'Welcome to GrubStack!',
@@ -47,7 +43,7 @@ export const createSampleNotifications = (addNotification: any) => {
   });
 };
 
-export const triggerOrderNotification = (addNotification: any, orderData: any) => {
+export const triggerOrderNotification = (addNotification: (n: Notification) => void, orderData: { id: string; customerName: string; total: number }) => {
   addNotification({
     title: 'New Order Received',
     message: `Order #${orderData.id} from ${orderData.customerName}. Total: ₹${orderData.total}`,
@@ -56,7 +52,7 @@ export const triggerOrderNotification = (addNotification: any, orderData: any) =
   });
 };
 
-export const triggerOrderStatusNotification = (addNotification: any, orderId: string, status: string) => {
+export const triggerOrderStatusNotification = (addNotification: (n: Notification) => void, orderId: string, status: string) => {
   addNotification({
     title: 'Order Status Update',
     message: `Your order #${orderId} status has been updated to: ${status}`,
@@ -65,7 +61,7 @@ export const triggerOrderStatusNotification = (addNotification: any, orderId: st
   });
 };
 
-export const triggerRestaurantApprovalNotification = (addNotification: any, restaurantName: string, approved: boolean) => {
+export const triggerRestaurantApprovalNotification = (addNotification: (n: Notification) => void, restaurantName: string, approved: boolean) => {
   addNotification({
     title: approved ? 'Restaurant Application Approved' : 'Restaurant Application Rejected',
     message: approved 
@@ -76,7 +72,7 @@ export const triggerRestaurantApprovalNotification = (addNotification: any, rest
   });
 };
 
-export const triggerPaymentNotification = (addNotification: any, orderId: string, success: boolean) => {
+export const triggerPaymentNotification = (addNotification: (n: Notification) => void, orderId: string, success: boolean) => {
   addNotification({
     title: success ? 'Payment Successful' : 'Payment Failed',
     message: success 

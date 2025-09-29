@@ -101,7 +101,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onToggleMode, onRegisterSuc
       
       
       onRegisterSuccess();
-    } catch (error: any) {
+  } catch (error) {
       toast({
         variant: "destructive",
         title: "Registration failed",

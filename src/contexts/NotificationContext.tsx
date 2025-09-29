@@ -50,9 +50,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       try {
         const parsed = JSON.parse(savedNotifications);
         // Convert timestamp strings back to Date objects
-        const notificationsWithDates = parsed.map((n: any) => ({
+        const notificationsWithDates = parsed.map((n: Notification) => ({
           ...n,
-          timestamp: new Date(n.timestamp)
+          timestamp: new Date(typeof n.timestamp === 'string' ? n.timestamp : Date.now())
         }));
         setNotifications(notificationsWithDates);
       } catch (error) {

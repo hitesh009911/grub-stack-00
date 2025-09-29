@@ -112,8 +112,8 @@ const RestaurantPage: React.FC = () => {
   }, [id, restaurant]);
 
   // Function to get restaurant-specific mock menu
-  const getRestaurantSpecificMockMenu = (restaurantId: number, restaurantName: string) => {
-    const restaurantMenus: { [key: number]: any[] } = {
+  const getRestaurantSpecificMockMenu = (restaurantId: number, restaurantName: string): MenuItem[] => {
+    const restaurantMenus: { [key: number]: MenuItem[] } = {
       1: [ // Sushi Place
         {
           id: 1,
@@ -216,7 +216,7 @@ const RestaurantPage: React.FC = () => {
     if (!restaurant) return;
 
     // Check if restaurant is offline (delivery status)
-    if (restaurant.deliveryStatus === 'OFFLINE' || restaurant.deliveryStatus === 'offline') {
+  if (restaurant.deliveryStatus === 'OFFLINE') {
       toast({
         variant: "destructive",
         title: "Restaurant Offline",
@@ -226,7 +226,7 @@ const RestaurantPage: React.FC = () => {
     }
 
     // Check if restaurant account is active
-    if (restaurant.status === 'INACTIVE' || restaurant.status === 'inactive') {
+  if (restaurant.status === 'INACTIVE') {
       toast({
         variant: "destructive",
         title: "Restaurant Inactive",
@@ -316,7 +316,7 @@ const RestaurantPage: React.FC = () => {
               <h2 className="text-xl font-bold">{restaurant.name}</h2>
               <div className="flex items-center space-x-2">
                 {/* Delivery Status - Only show Online/Offline */}
-                {restaurant.deliveryStatus === 'ONLINE' || restaurant.deliveryStatus === 'online' ? (
+                {restaurant.deliveryStatus === 'ONLINE' ? (
                   <Badge variant="default" className="text-xs bg-green-100 text-green-800">
                     Online
                   </Badge>
@@ -363,7 +363,7 @@ const RestaurantPage: React.FC = () => {
       <div className="px-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Menu</h3>
-          {(restaurant.deliveryStatus === 'OFFLINE' || restaurant.deliveryStatus === 'offline') && (
+          {restaurant.deliveryStatus === 'OFFLINE' && (
             <Badge variant="destructive" className="text-xs">
               View Only - Restaurant Offline
             </Badge>
@@ -396,13 +396,13 @@ const RestaurantPage: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className={restaurant.deliveryStatus === 'OFFLINE' || restaurant.deliveryStatus === 'offline' ? 'opacity-75' : ''}>
+                <Card className={restaurant.deliveryStatus === 'OFFLINE' ? 'opacity-75' : ''}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
                           <h4 className="font-semibold text-lg">{item.name}</h4>
-                          {(restaurant.deliveryStatus === 'OFFLINE' || restaurant.deliveryStatus === 'offline') && (
+                          {restaurant.deliveryStatus === 'OFFLINE' && (
                             <Badge variant="outline" className="text-xs text-muted-foreground">
                               View Only
                             </Badge>
@@ -415,7 +415,7 @@ const RestaurantPage: React.FC = () => {
                       </div>
                       
                       <div className="flex items-center space-x-2 ml-4">
-                        {restaurant.deliveryStatus === 'OFFLINE' || restaurant.deliveryStatus === 'offline' ? (
+                        {restaurant.deliveryStatus === 'OFFLINE' ? (
                           <Button
                             size="sm"
                             disabled
@@ -425,7 +425,7 @@ const RestaurantPage: React.FC = () => {
                             <Plus className="h-4 w-4 mr-1" />
                             View Only
                           </Button>
-                        ) : restaurant.status === 'INACTIVE' || restaurant.status === 'inactive' ? (
+                        ) : restaurant.status === 'INACTIVE' ? (
                           <Button
                             size="sm"
                             disabled

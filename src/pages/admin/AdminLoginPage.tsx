@@ -67,7 +67,7 @@ const AdminLoginPage: React.FC = () => {
       });
       
       navigate('/admin/dashboard');
-    } catch (error: any) {
+  } catch (error) {
       console.error('Admin login error:', error);
       toast({
         variant: "destructive",

@@ -41,15 +41,19 @@ const HomePage: React.FC = () => {
         const { data } = await api.get('/restaurants');
         
         // Transform backend data to frontend format
-        const transformedRestaurants = data.map((restaurant: any) => ({
-          ...restaurant,
-          image: getRestaurantImage(restaurant.cuisine),
-          rating: 4.5 + Math.random() * 0.5, // Mock rating
-          deliveryTime: `${20 + Math.floor(Math.random() * 20)}-${30 + Math.floor(Math.random() * 20)} min`,
-          deliveryFee: 1.99 + Math.random() * 3
-        }));
-        
-        setRestaurants(transformedRestaurants);
+  const transformedRestaurants = (data as any[]).map((restaurant) => ({
+    id: Number(restaurant.id),
+    name: restaurant.name || '',
+    description: restaurant.description || '',
+    cuisine: restaurant.cuisine || '',
+    address: restaurant.address || '',
+    createdAt: restaurant.createdAt || '',
+    image: getRestaurantImage(restaurant.cuisine || ''),
+    rating: 4.5 + Math.random() * 0.5, // Mock rating
+    deliveryTime: `${20 + Math.floor(Math.random() * 20)}-${30 + Math.floor(Math.random() * 20)} min`,
+    deliveryFee: 1.99 + Math.random() * 3
+  }));
+  setRestaurants(transformedRestaurants);
       } catch (err) {
         setError('Failed to load restaurants');
         console.error('Error fetching restaurants:', err);

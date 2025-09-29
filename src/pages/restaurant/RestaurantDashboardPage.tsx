@@ -172,7 +172,7 @@ const RestaurantDashboardPage: React.FC = () => {
           // Fallback to fetch all orders and filter
           const allOrdersResponse = await api.get('/orders/all');
           const allOrders = allOrdersResponse.data || [];
-          restaurantOrders = allOrders.filter((order: any) => order.restaurantId === restaurantId);
+          restaurantOrders = allOrders.filter((order: Record<string, unknown>) => order.restaurantId === restaurantId);
         } catch (fallbackError) {
           console.log('Failed to fetch all orders, using mock data:', fallbackError);
           // Use mock data when API is not available
@@ -220,20 +220,20 @@ const RestaurantDashboardPage: React.FC = () => {
       const deliveries = deliveriesResponse.data || [];
       
       // Filter deliveries for this restaurant
-      const restaurantDeliveries = deliveries.filter((delivery: any) => delivery.restaurantId === restaurantId);
+  const restaurantDeliveries = deliveries.filter((delivery: Record<string, unknown>) => delivery.restaurantId === restaurantId);
       
       // Calculate stats
       const today = new Date().toDateString();
-      const todayOrders = restaurantOrders.filter((order: any) => 
-        new Date(order.createdAt).toDateString() === today
+  const todayOrders = restaurantOrders.filter((order: Record<string, unknown>) => 
+  new Date(String(order.createdAt)).toDateString() === today
       );
       
-      const totalRevenue = restaurantOrders.reduce((sum: number, order: any) => 
+  const totalRevenue = restaurantOrders.reduce((sum: number, order: Record<string, any>) => 
         sum + (order.totalCents || 0), 0
       ) / 100;
       
-      const activeDeliveries = restaurantDeliveries.filter((delivery: any) => 
-        ['PENDING', 'ASSIGNED', 'PICKED_UP'].includes(delivery.status)
+  const activeDeliveries = restaurantDeliveries.filter((delivery: Record<string, unknown>) => 
+  ['PENDING', 'ASSIGNED', 'PICKED_UP'].includes(String(delivery.status))
       ).length;
       
       setStats({
@@ -246,7 +246,7 @@ const RestaurantDashboardPage: React.FC = () => {
       });
       
       // Set recent orders with delivery agent information
-      const recentOrdersData = restaurantOrders.slice(0, 5).map((order: any) => {
+  const recentOrdersData = restaurantOrders.slice(0, 5).map((order: Record<string, any>) => {
         // Find delivery for this order
         const delivery = restaurantDeliveries.find((delivery: any) => delivery.orderId === order.id);
         
@@ -257,7 +257,7 @@ const RestaurantDashboardPage: React.FC = () => {
           total: (order.totalCents || 0) / 100,
           status: order.status || 'PENDING',
           orderStatus: order.status || 'PENDING',
-          time: formatTimeAgo(new Date(order.createdAt)),
+          time: formatTimeAgo(new Date(String(order.createdAt))),
           customerId: order.userId,
           deliveryAgent: delivery?.agent || null
         };
@@ -266,12 +266,12 @@ const RestaurantDashboardPage: React.FC = () => {
       setRecentOrders(recentOrdersData);
       
       // Generate notifications for new orders
-      const newNotifications = todayOrders.map((order: any) => ({
+  const newNotifications = todayOrders.map((order: Record<string, any>) => ({
         id: `order-${order.id}`,
         type: 'order' as const,
         title: 'New Order Received',
         message: `Order #${order.id} from Customer #${order.userId}`,
-        timestamp: new Date(order.createdAt),
+  timestamp: new Date(String(order.createdAt)),
         read: false,
         actionUrl: `/restaurant/orders/${order.id}`
       }));
@@ -287,12 +287,12 @@ const RestaurantDashboardPage: React.FC = () => {
           const realNotifications = notificationsResponse.data || [];
           
           // Get restaurant order IDs to filter notifications
-          const restaurantOrderIds = restaurantOrders.map((order: any) => order.id);
+          const restaurantOrderIds = restaurantOrders.map((order: Record<string, any>) => order.id);
           
           // Convert notification service data to our notification format
           // Only show notifications that are related to this restaurant's orders
           const convertedNotifications = realNotifications
-            .filter((notif: any) => {
+            .filter((notif: Record<string, any>) => {
               // Filter by notification type
               if (notif.type !== 'ORDER_CONFIRMATION' && notif.type !== 'DELIVERY_DELIVERED') {
                 return false;
@@ -309,7 +309,7 @@ const RestaurantDashboardPage: React.FC = () => {
               return true;
             })
             .slice(0, 10) // Limit to 10 most recent
-            .map((notif: any, index: number) => ({
+            .map((notif: Record<string, any>, index: number) => ({
               id: `real-${notif.id}-${index}-${Date.now()}`, // Ensure unique keys
               type: notif.type === 'ORDER_CONFIRMATION' ? 'order' : 'delivery',
               title: notif.type === 'ORDER_CONFIRMATION' ? 'Order Confirmed' : 'Order Delivered',
@@ -428,16 +428,7 @@ const RestaurantDashboardPage: React.FC = () => {
       setRestaurantData(data);
     } else {
       // Set demo restaurant data
-      setRestaurantData({
-        id: 1,
-        name: 'Demo Restaurant',
-        ownerName: 'Demo Owner',
-        email: 'restaurant@grubstack.com',
-        phone: '+91 9876543210',
-        address: '123 Demo Street, Demo City',
-        description: 'A demo restaurant for testing',
-        status: 'active'
-      });
+      
     }
     
     // Fetch initial data
@@ -478,7 +469,7 @@ const RestaurantDashboardPage: React.FC = () => {
       // Get orders for this restaurant to filter notifications
       const ordersResponse = await api.get(`/orders/restaurant/${restaurantId}`);
       const restaurantOrders = ordersResponse.data || [];
-      const restaurantOrderIds = restaurantOrders.map((order: any) => order.id);
+  const restaurantOrderIds = restaurantOrders.map((order: Record<string, any>) => order.id);
       
       console.log(`[${new Date().toLocaleTimeString()}] Fetching notifications for restaurant ${restaurantId}`);
       console.log(`Restaurant order IDs:`, restaurantOrderIds);
@@ -486,7 +477,7 @@ const RestaurantDashboardPage: React.FC = () => {
       // Convert notification service data to our notification format
       // Only show notifications that are related to this restaurant's orders
       const convertedNotifications = realNotifications
-        .filter((notif: any) => {
+        .filter((notif: Record<string, any>) => {
           // Filter by notification type
           if (notif.type !== 'ORDER_CONFIRMATION' && notif.type !== 'DELIVERY_DELIVERED') {
             return false;
@@ -504,7 +495,7 @@ const RestaurantDashboardPage: React.FC = () => {
           return true;
         })
         .slice(0, 15) // Limit to 15 most recent
-        .map((notif: any, index: number) => ({
+  .map((notif: Record<string, any>, index: number) => ({
           id: `real-${notif.id}-${index}-${Date.now()}`, // Ensure unique keys
           type: notif.type === 'ORDER_CONFIRMATION' ? 'order' : 'delivery',
           title: notif.type === 'ORDER_CONFIRMATION' ? 'Order Confirmed' : 'Order Delivered',
@@ -632,7 +623,7 @@ const RestaurantDashboardPage: React.FC = () => {
       console.log('Restaurant delivery status updated successfully:', updatedRestaurant);
 
       // Update local state
-      setRestaurantData(prev => prev ? { ...prev, deliveryStatus: newDeliveryStatus } : null);
+  setRestaurantData(prev => prev ? { ...prev, deliveryStatus: newDeliveryStatus.toUpperCase() as 'ONLINE' | 'OFFLINE' } : null);
 
       // Update localStorage with new delivery status
       const restaurantAuth = localStorage.getItem('restaurantAuth');
@@ -718,7 +709,7 @@ const RestaurantDashboardPage: React.FC = () => {
             <div>
               <h1 className="text-xl font-bold text-foreground">{restaurantData?.name}</h1>
               <p className="text-sm text-muted-foreground">Restaurant Dashboard</p>
-              {restaurantData?.status === 'pending' && (
+              {restaurantData?.status === 'PENDING' && (
                 <Badge variant="secondary" className="mt-1">
                   <Clock className="h-3 w-3 mr-1" />
                   Pending Approval
