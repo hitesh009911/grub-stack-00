@@ -42,7 +42,19 @@ const BrowsePage: React.FC = () => {
         const { data } = await api.get('/restaurants');
         
         // Transform backend data to frontend format
-        const transformedRestaurants = data.map((restaurant: any) => ({
+        type Restaurant = {
+          id: number;
+          name: string;
+          description: string;
+          cuisine: string;
+          address: string;
+          createdAt: string;
+          image: string;
+          rating: number;
+          deliveryTime: string;
+          deliveryFee: number;
+        };
+        const transformedRestaurants = (data as Restaurant[]).map((restaurant) => ({
           ...restaurant,
           image: getRestaurantImage(restaurant.cuisine),
           rating: 4.5 + Math.random() * 0.5, // Mock rating

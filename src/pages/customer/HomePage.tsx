@@ -41,7 +41,7 @@ const HomePage: React.FC = () => {
         const { data } = await api.get('/restaurants');
         
         // Transform backend data to frontend format
-  const transformedRestaurants = (data as any[]).map((restaurant) => ({
+  const transformedRestaurants = (data as Restaurant[]).map((restaurant) => ({
     id: Number(restaurant.id),
     name: restaurant.name || '',
     description: restaurant.description || '',

@@ -219,21 +219,23 @@ const RestaurantDashboardPage: React.FC = () => {
       const deliveriesResponse = await api.get('/deliveries');
       const deliveries = deliveriesResponse.data || [];
       
-      // Filter deliveries for this restaurant
-  const restaurantDeliveries = deliveries.filter((delivery: Record<string, unknown>) => delivery.restaurantId === restaurantId);
+    // Filter deliveries for this restaurant
+  type Delivery = { orderId: number; restaurantId: number; status: string; agent?: { id: number; name: string; phone: string; vehicleType: string } };
+    const restaurantDeliveries = (deliveries as Delivery[]).filter((delivery) => delivery.restaurantId === restaurantId);
       
       // Calculate stats
       const today = new Date().toDateString();
-  const todayOrders = restaurantOrders.filter((order: Record<string, unknown>) => 
-  new Date(String(order.createdAt)).toDateString() === today
+      type Order = { id: number; userId: number; items?: { menuItemId: number; quantity: number }[]; totalCents?: number; status?: string; createdAt: string };
+      const todayOrders = (restaurantOrders as Order[]).filter((order) =>
+        new Date(String(order.createdAt)).toDateString() === today
       );
       
-  const totalRevenue = restaurantOrders.reduce((sum: number, order: Record<string, any>) => 
+      const totalRevenue = (restaurantOrders as Order[]).reduce((sum: number, order) =>
         sum + (order.totalCents || 0), 0
       ) / 100;
       
-  const activeDeliveries = restaurantDeliveries.filter((delivery: Record<string, unknown>) => 
-  ['PENDING', 'ASSIGNED', 'PICKED_UP'].includes(String(delivery.status))
+      const activeDeliveries = restaurantDeliveries.filter((delivery) =>
+        ['PENDING', 'ASSIGNED', 'PICKED_UP'].includes(String(delivery.status))
       ).length;
       
       setStats({
@@ -246,17 +248,21 @@ const RestaurantDashboardPage: React.FC = () => {
       });
       
       // Set recent orders with delivery agent information
-  const recentOrdersData = restaurantOrders.slice(0, 5).map((order: Record<string, any>) => {
+      const recentOrdersData = (restaurantOrders as Order[]).slice(0, 5).map((order) => {
         // Find delivery for this order
-        const delivery = restaurantDeliveries.find((delivery: any) => delivery.orderId === order.id);
-        
+        const delivery = restaurantDeliveries.find((delivery) => delivery.orderId === order.id);
+        // Ensure orderStatus is one of the allowed values
+        const allowedStatuses = ['PENDING', 'PREPARING', 'READY', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'] as const;
+        const status = (order.status && allowedStatuses.includes(order.status as typeof allowedStatuses[number]))
+          ? (order.status as typeof allowedStatuses[number])
+          : 'PENDING';
         return {
           id: order.id,
           customerName: `Customer #${order.userId}`,
-          items: order.items?.map((item: any) => `${item.quantity}x ${getMenuItemName(item.menuItemId)}`).join(', ') || 'Order items',
+          items: order.items?.map((item) => `${item.quantity}x ${getMenuItemName(item.menuItemId)}`).join(', ') || 'Order items',
           total: (order.totalCents || 0) / 100,
           status: order.status || 'PENDING',
-          orderStatus: order.status || 'PENDING',
+          orderStatus: status,
           time: formatTimeAgo(new Date(String(order.createdAt))),
           customerId: order.userId,
           deliveryAgent: delivery?.agent || null
@@ -266,7 +272,7 @@ const RestaurantDashboardPage: React.FC = () => {
       setRecentOrders(recentOrdersData);
       
       // Generate notifications for new orders
-  const newNotifications = todayOrders.map((order: Record<string, any>) => ({
+    const newNotifications = todayOrders.map((order) => ({
         id: `order-${order.id}`,
         type: 'order' as const,
         title: 'New Order Received',

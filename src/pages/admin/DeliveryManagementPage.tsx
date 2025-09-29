@@ -1,3 +1,69 @@
+
+// Handler to re-approve a previously rejected agent (must be after component to access hooks/vars)
+export async function handleReapproveAgent(agentId: number) {
+  // @ts-ignore
+  const { toast } = require('@/hooks/use-toast').useToast();
+  // @ts-ignore
+  const fetchPendingAgents = window.fetchPendingAgents || (() => {});
+  // @ts-ignore
+  const fetchAgents = window.fetchAgents || (() => {});
+  try {
+    const response = await fetch(`http://localhost:8086/deliveries/agents/${agentId}/reapprove`, {
+      method: 'PUT'
+    });
+    if (response.ok) {
+      toast({
+        title: 'Success',
+        description: 'Agent re-approved successfully.'
+      });
+      await fetchPendingAgents();
+      await fetchAgents(true);
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to re-approve agent');
+    }
+  } catch (error: any) {
+    console.error('Error re-approving agent:', error);
+    toast({
+      title: 'Error',
+      description: `Failed to re-approve agent: ${error.message}`,
+      variant: 'destructive'
+    });
+  }
+}
+
+// Handler to permanently remove a rejected agent
+export async function handlePermanentlyRejectAgent(agentId: number) {
+  // @ts-ignore
+  const { toast } = require('@/hooks/use-toast').useToast();
+  // @ts-ignore
+  const fetchPendingAgents = window.fetchPendingAgents || (() => {});
+  // @ts-ignore
+  const fetchAgents = window.fetchAgents || (() => {});
+  try {
+    const response = await fetch(`http://localhost:8086/deliveries/agents/${agentId}/permanent-reject`, {
+      method: 'DELETE'
+    });
+    if (response.ok) {
+      toast({
+        title: 'Success',
+        description: 'Agent permanently removed.'
+      });
+      await fetchPendingAgents();
+      await fetchAgents(true);
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to remove agent');
+    }
+  } catch (error: any) {
+    console.error('Error permanently removing agent:', error);
+    toast({
+      title: 'Error',
+      description: `Failed to remove agent: ${error.message}`,
+      variant: 'destructive'
+    });
+  }
+}
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -558,12 +624,12 @@ const DeliveryManagementPage = () => {
       const deliveriesResponse = await fetch(`http://localhost:8086/deliveries/agent/${agentId}`);
       if (deliveriesResponse.ok) {
         const deliveries = await deliveriesResponse.json();
-        const activeDeliveries = deliveries.filter((d: any) => 
+        type Delivery = { orderId: number; status: string };
+        const activeDeliveries = (deliveries as Delivery[]).filter((d) => 
           ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)
         );
-        
         if (activeDeliveries.length > 0) {
-          const deliveryList = activeDeliveries.map((d: any) => `Order #${d.orderId} (${d.status})`).join(', ');
+          const deliveryList = activeDeliveries.map((d) => `Order #${d.orderId} (${d.status})`).join(', ');
           toast({
             title: "Cannot Delete Agent",
             description: `This agent has ${activeDeliveries.length} active delivery(ies): ${deliveryList}. Please complete or reassign these deliveries first.`,
