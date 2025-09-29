@@ -71,16 +71,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(loggedIn);
       localStorage.setItem('grub-stack-user', JSON.stringify(loggedIn));
-    } catch (error: any) {
-      if (error.response?.status === 401) {
-        throw new Error('Invalid email or password');
-      } else if (error.response?.status === 500) {
-        throw new Error('Server error. Please try again later.');
-      } else if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-      } else {
-        throw new Error('Login failed. Please check your connection.');
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' && error !== null &&
+        'response' in error &&
+        typeof (error as any).response === 'object' &&
+        (error as any).response !== null
+      ) {
+        const response = (error as any).response;
+        if (response.status === 401) {
+          throw new Error('Invalid email or password');
+        } else if (response.status === 500) {
+          throw new Error('Server error. Please try again later.');
+        } else if (response.data?.error) {
+          throw new Error(response.data.error);
+        }
       }
+      throw new Error('Login failed. Please check your connection.');
     } finally {
       setIsLoading(false);
     }
@@ -118,18 +125,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(newUser);
       localStorage.setItem('grub-stack-user', JSON.stringify(newUser));
-    } catch (error: any) {
-      if (error.response?.status === 409) {
-        throw new Error('Email already exists. Please use a different email.');
-      } else if (error.response?.status === 400) {
-        throw new Error('Invalid registration data. Please check your inputs.');
-      } else if (error.response?.status === 500) {
-        throw new Error('Server error. Please try again later.');
-      } else if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-      } else {
-        throw new Error('Registration failed. Please check your connection.');
+    } catch (error: unknown) {
+      if (
+        typeof error === 'object' && error !== null &&
+        'response' in error &&
+        typeof (error as any).response === 'object' &&
+        (error as any).response !== null
+      ) {
+        const response = (error as any).response;
+        if (response.status === 409) {
+          throw new Error('Email already exists. Please use a different email.');
+        } else if (response.status === 400) {
+          throw new Error('Invalid registration data. Please check your inputs.');
+        } else if (response.status === 500) {
+          throw new Error('Server error. Please try again later.');
+        } else if (response.data?.error) {
+          throw new Error(response.data.error);
+        }
       }
+      throw new Error('Registration failed. Please check your connection.');
     } finally {
       setIsLoading(false);
     }

@@ -22,11 +22,15 @@ export async function handleReapproveAgent(agentId: number) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to re-approve agent');
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error re-approving agent:', error);
+    let message = 'Unknown error';
+    if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as any).message === 'string') {
+      message = (error as any).message;
+    }
     toast({
       title: 'Error',
-      description: `Failed to re-approve agent: ${error.message}`,
+      description: `Failed to re-approve agent: ${message}`,
       variant: 'destructive'
     });
   }
@@ -55,11 +59,15 @@ export async function handlePermanentlyRejectAgent(agentId: number) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to remove agent');
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error permanently removing agent:', error);
+    let message = 'Unknown error';
+    if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as any).message === 'string') {
+      message = (error as any).message;
+    }
     toast({
       title: 'Error',
-      description: `Failed to remove agent: ${error.message}`,
+      description: `Failed to remove agent: ${message}`,
       variant: 'destructive'
     });
   }

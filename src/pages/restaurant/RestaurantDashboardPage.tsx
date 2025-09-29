@@ -293,43 +293,45 @@ const RestaurantDashboardPage: React.FC = () => {
           const realNotifications = notificationsResponse.data || [];
           
           // Get restaurant order IDs to filter notifications
-          const restaurantOrderIds = restaurantOrders.map((order: Record<string, any>) => order.id);
+          const restaurantOrderIds = restaurantOrders.map((order: { id: number }) => order.id);
           
           // Convert notification service data to our notification format
           // Only show notifications that are related to this restaurant's orders
-          const convertedNotifications = realNotifications
-            .filter((notif: Record<string, any>) => {
-              // Filter by notification type
-              if (notif.type !== 'ORDER_CONFIRMATION' && notif.type !== 'DELIVERY_DELIVERED') {
-                return false;
-              }
-              
+          // Type guard for notification
+          function isOrderNotification(notif: any): notif is { id: string|number, type: string, subject?: string, message?: string, createdAt?: string, timestamp?: string } {
+            return notif && typeof notif === 'object' &&
+              ('type' in notif) &&
+              (notif.type === 'ORDER_CONFIRMATION' || notif.type === 'DELIVERY_DELIVERED');
+          }
+
+          const convertedNotifications = (realNotifications as any[])
+            .filter(isOrderNotification)
+            .filter((notif) => {
               // Extract order ID from notification content if possible
               const orderIdMatch = notif.subject?.match(/Order #(\d+)/) || notif.message?.match(/Order #(\d+)/);
               if (orderIdMatch) {
                 const orderId = parseInt(orderIdMatch[1]);
                 return restaurantOrderIds.includes(orderId);
               }
-              
               // If we can't extract order ID, include it anyway (fallback)
               return true;
             })
-            .slice(0, 10) // Limit to 10 most recent
-            .map((notif: Record<string, any>, index: number) => ({
-              id: `real-${notif.id}-${index}-${Date.now()}`, // Ensure unique keys
-              type: notif.type === 'ORDER_CONFIRMATION' ? 'order' : 'delivery',
+            .slice(0, 10)
+            .map((notif, index) => ({
+              id: `real-${notif.id}-${index}-${Date.now()}`,
+              type: notif.type === 'ORDER_CONFIRMATION' ? 'order' as const : 'delivery' as const,
               title: notif.type === 'ORDER_CONFIRMATION' ? 'Order Confirmed' : 'Order Delivered',
               message: notif.subject || notif.message || 'Notification from system',
               timestamp: new Date(notif.createdAt || notif.timestamp || new Date()),
               read: false,
               actionUrl: notif.type === 'ORDER_CONFIRMATION' ? '/restaurant/orders' : '/restaurant/orders'
             }));
-          
+
           // Remove duplicates and combine with order-based notifications
           const uniqueConvertedNotifications = convertedNotifications.filter((notif, index, self) => 
             index === self.findIndex(n => n.message === notif.message && n.timestamp.getTime() === notif.timestamp.getTime())
           );
-          
+
           setNotifications(prev => {
             // Combine all notifications and remove duplicates
             const allNotifications = [...uniqueConvertedNotifications, ...newNotifications, ...prev];

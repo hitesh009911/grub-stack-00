@@ -25,6 +25,17 @@ import { useToast } from '@/hooks/use-toast';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { validatePhoneNumber, formatPhoneInput } from '@/utils/validation';
 
+interface DeliveryAgent {
+  id: number;
+  email: string;
+  name: string;
+  phone: string;
+  status?: string;
+  vehicleType: string;
+  licenseNumber: string;
+  createdAt?: string;
+}
+
 const DeliveryAgentLoginPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -33,13 +44,14 @@ const DeliveryAgentLoginPage = () => {
   const [success, setSuccess] = useState(false);
   const [phoneError, setPhoneError] = useState<string>('');
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    vehicleType: '',
-    licenseNumber: ''
-  });
+    const [formData, setFormData] = useState({
+      name: '',
+      email: '',
+      phone: '',
+      vehicleType: '',
+      licenseNumber: '',
+      password: ''
+    });
 
   // Determine where to go back based on referrer
   const getBackNavigation = () => {
@@ -85,7 +97,17 @@ const DeliveryAgentLoginPage = () => {
         
         if (agentResponse.ok) {
           const agents = await agentResponse.json();
-          const dbAgent = agents.find((a: any) => a.email === formData.email);
+
+            interface DeliveryAgent {
+              id: number;
+              email: string;
+              name: string;
+              phone: string;
+              status?: string;
+              vehicleType: string;
+              licenseNumber: string;
+            }
+          const dbAgent = (agents as DeliveryAgent[]).find((a: DeliveryAgent) => a.email === formData.email);
           
           if (dbAgent) {
             console.log('Found agent in database:', dbAgent);
@@ -289,7 +311,7 @@ const DeliveryAgentLoginPage = () => {
   };
 
   // Send registration acknowledgment email
-  const sendRegistrationAcknowledgment = async (agent: any) => {
+  const sendRegistrationAcknowledgment = async (agent: DeliveryAgent) => {
     try {
       const response = await fetch('/api/notifications/send', {
         method: 'POST',
@@ -345,7 +367,7 @@ const DeliveryAgentLoginPage = () => {
                   onClick={() => {
                     setSuccess(false);
                     setIsRegisterMode(false);
-                    setFormData({ name: '', email: '', phone: '', vehicleType: '', licenseNumber: '' });
+                    setFormData({ name: '', email: '', phone: '', vehicleType: '', licenseNumber: '', password: '' });
                   }} 
                   className="w-full"
                 >
